@@ -42,6 +42,7 @@ go get github.com/henrybravos/sunatlib
 
 ## Uso Básico
 
+### Opción 1: Proceso completo (todo en uno)
 ```go
 package main
 
@@ -74,7 +75,7 @@ func main() {
         log.Fatal(err)
     }
 
-    // Sign and send
+    // Sign and send (convenience method)
     response, err := client.SignAndSendInvoice(xmlContent, "01", "F001-00000001")
     if err != nil {
         log.Fatal(err)
@@ -86,6 +87,44 @@ func main() {
         response.SaveApplicationResponse("cdr.zip")
     } else {
         fmt.Printf("❌ Error: %s\n", response.Message)
+    }
+}
+```
+
+### Opción 2: Control separado (Recomendado)
+```go
+func main() {
+    client := sunatlib.NewSUNATClient("20123456789", "MODDATOS", "moddatos", endpoint)
+    defer client.Cleanup()
+    
+    err := client.SetCertificateFromPFX("certificate.pfx", "password", "/tmp/certs")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    xmlContent, err := os.ReadFile("invoice.xml")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Step 1: Sign XML (you get the signed XML back)
+    signedXML, err := client.SignXML(xmlContent)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Optional: Save signed XML for inspection or later use
+    os.WriteFile("invoice_signed.xml", signedXML, 0644)
+
+    // Step 2: Send to SUNAT when ready
+    response, err := client.SendToSUNAT(signedXML, "01", "F001-00000001")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if response.Success {
+        fmt.Println("✅ Invoice accepted")
+        response.SaveApplicationResponse("cdr.zip")
     }
 }
 ```
@@ -126,6 +165,45 @@ sunatlib/
 └── README.md
 ```
 
+## Casos de Uso
+
+### 🔧 Firma únicamente (sin envío a SUNAT)
+```go
+client := sunatlib.NewSUNATClient("", "", "", "") // Sin credenciales SUNAT
+client.SetCertificateFromPFX("cert.pfx", "password", "/tmp")
+
+signedXML, err := client.SignXML(xmlContent)
+// Usar signedXML para almacenamiento, validación, etc.
+```
+
+### 📦 Procesamiento por lotes
+```go
+documents := []string{"inv1.xml", "inv2.xml", "inv3.xml"}
+
+for _, doc := range documents {
+    xmlContent, _ := os.ReadFile(doc)
+    signedXML, _ := client.SignXML(xmlContent)
+    
+    // Decidir cuándo enviar a SUNAT
+    if shouldSendNow(doc) {
+        client.SendToSUNAT(signedXML, "01", getSeriesNumber(doc))
+    } else {
+        saveForLater(signedXML, doc)
+    }
+}
+```
+
+### ⏰ Firmar ahora, enviar después
+```go
+// Fase 1: Firmar durante horario de oficina
+signedXML, _ := client.SignXML(xmlContent)
+os.WriteFile("signed_invoice.xml", signedXML, 0644)
+
+// Fase 2: Enviar durante ventana de transmisión
+signedXML, _ := os.ReadFile("signed_invoice.xml")
+response, _ := client.SendToSUNAT(signedXML, "01", "F001-00000001")
+```
+
 ## API Reference
 
 ### SUNATClient
@@ -135,6 +213,8 @@ sunatlib/
 - `NewSUNATClient(ruc, username, password, endpoint string) *SUNATClient`
 - `SetCertificate(privateKeyPath, certificatePath string) error`
 - `SetCertificateFromPFX(pfxPath, password, tempDir string) error`
+- `SignXML(xmlContent []byte) ([]byte, error)` - **New!**
+- `SendToSUNAT(signedXML []byte, documentType, seriesNumber string) (*SUNATResponse, error)` - **New!**
 - `SignAndSendInvoice(xmlContent []byte, documentType, seriesNumber string) (*SUNATResponse, error)`
 - `Cleanup() error`
 

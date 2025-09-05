@@ -42,14 +42,31 @@ func sendInvoiceExample() error {
 		return fmt.Errorf("failed to read XML file: %w", err)
 	}
 
-	// Sign and send invoice to SUNAT
-	response, err := client.SignAndSendInvoice(
-		xmlContent,      // XML content
+	// Step 1: Sign the XML document
+	fmt.Println("🔏 Signing XML document...")
+	signedXML, err := client.SignXML(xmlContent)
+	if err != nil {
+		return fmt.Errorf("failed to sign XML: %w", err)
+	}
+	fmt.Printf("✅ XML signed successfully (%d bytes)\n", len(signedXML))
+
+	// Optional: Save signed XML for inspection or later use
+	err = os.WriteFile("invoice_signed.xml", signedXML, 0644)
+	if err != nil {
+		log.Printf("⚠️ Failed to save signed XML: %v", err)
+	} else {
+		fmt.Println("💾 Signed XML saved as: invoice_signed.xml")
+	}
+
+	// Step 2: User decides when to send to SUNAT
+	fmt.Println("🚀 Sending to SUNAT...")
+	response, err := client.SendToSUNAT(
+		signedXML,       // Previously signed XML
 		"01",           // Document type (invoice)
 		"F001-00000001", // Series-number
 	)
 	if err != nil {
-		return fmt.Errorf("failed to send invoice: %w", err)
+		return fmt.Errorf("failed to send to SUNAT: %w", err)
 	}
 
 	// Process response

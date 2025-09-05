@@ -53,8 +53,8 @@ func (c *SUNATClient) SetCertificateFromPFX(pfxPath, password, tempDir string) e
 	return c.SetCertificate(privateKeyPath, certPath)
 }
 
-// SignAndSendInvoice signs an XML invoice and sends it to SUNAT
-func (c *SUNATClient) SignAndSendInvoice(xmlContent []byte, documentType, seriesNumber string) (*SUNATResponse, error) {
+// SignXML signs an XML document and returns the signed XML
+func (c *SUNATClient) SignXML(xmlContent []byte) ([]byte, error) {
 	if c.signer == nil {
 		return nil, fmt.Errorf("certificate not configured - use SetCertificate() first")
 	}
@@ -70,8 +70,24 @@ func (c *SUNATClient) SignAndSendInvoice(xmlContent []byte, documentType, series
 		return nil, fmt.Errorf("failed to sign XML: %w", err)
 	}
 
-	// Send to SUNAT
+	return signedXML, nil
+}
+
+// SendToSUNAT sends a signed XML document to SUNAT
+func (c *SUNATClient) SendToSUNAT(signedXML []byte, documentType, seriesNumber string) (*SUNATResponse, error) {
 	return c.sendToSUNAT(signedXML, documentType, seriesNumber)
+}
+
+// SignAndSendInvoice signs an XML invoice and sends it to SUNAT (convenience method)
+func (c *SUNATClient) SignAndSendInvoice(xmlContent []byte, documentType, seriesNumber string) (*SUNATResponse, error) {
+	// Sign the XML
+	signedXML, err := c.SignXML(xmlContent)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign XML: %w", err)
+	}
+
+	// Send to SUNAT
+	return c.SendToSUNAT(signedXML, documentType, seriesNumber)
 }
 
 // sendToSUNAT handles the SOAP communication with SUNAT
