@@ -1,0 +1,55 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go build command
+go-sunatlib
+
+# Go workspace files
+go.work
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+/tmp/
+*.tmp
+*.temp
+
+# Certificate files (sensitive)
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+
+# Test files with real data
+*_real*
+*_test*
+*_private*
+
+# CDR responses
+cdr_*.zip
+*.zip
+
+# Log files
+*.log
