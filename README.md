@@ -10,6 +10,8 @@ Una librería en Go para firmar documentos XML y enviarlos a SUNAT (Superintende
 - ✅ Manejo automático de ZIP y codificación base64
 - ✅ Validación de certificados
 - ✅ Procesamiento de respuestas CDR (Constancia de Recepción)
+- ✅ **Consulta RUC usando API DeColecta (Pago - Nuevo)**
+- ✅ **Consulta DNI/CE usando servicio EsSalud (Gratuito - Nuevo)**
 
 ## Requisitos
 
@@ -204,18 +206,108 @@ signedXML, _ := os.ReadFile("signed_invoice.xml")
 response, _ := client.SendToSUNAT(signedXML, "01", "F001-00000001")
 ```
 
+## Servicios de Consulta (Nuevo)
+
+### Consulta RUC con DeColecta (Requiere API Key - Pago)
+
+```go
+// Cliente con servicio RUC habilitado (requiere API key de DeColecta)
+client := sunatlib.NewSUNATClientWithRUCService(
+    "20123456789",                                    // RUC
+    "MODDATOS",                                       // Username  
+    "moddatos",                                       // Password
+    "https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService", // Endpoint
+    "your_decolecta_api_key",                        // DeColecta API Key (pago)
+)
+
+// Consulta básica de RUC
+rucResult, err := client.ConsultRUC("20601030013")
+if err != nil {
+    log.Fatal(err)
+}
+
+if rucResult.Success {
+    fmt.Printf("Razón Social: %s\n", rucResult.Data.RazonSocial)
+    fmt.Printf("Estado: %s\n", rucResult.Data.Estado)
+    fmt.Printf("Dirección: %s\n", rucResult.Data.Direccion)
+}
+
+// Consulta completa de RUC (incluye más detalles)
+rucFullResult, err := client.ConsultRUCFull("20601030013")
+if err != nil {
+    log.Fatal(err)
+}
+
+if rucFullResult.Success {
+    fmt.Printf("Actividad Económica: %s\n", rucFullResult.Data.ActividadEconomica)
+    fmt.Printf("Número de Trabajadores: %s\n", rucFullResult.Data.NumeroTrabajadores)
+    fmt.Printf("Tipo de Facturación: %s\n", rucFullResult.Data.TipoFacturacion)
+}
+```
+
+### Consulta DNI con EsSalud (Gratuito)
+
+```go
+// DNI consultation (available in both client types, always free)
+// Works with basic client too
+basicClient := sunatlib.NewSUNATClient("20123456789", "user", "pass", "endpoint")
+
+dniResult, err := basicClient.ConsultDNI("12345678")
+if err != nil {
+    log.Fatal(err)
+}
+
+if dniResult.Success {
+    fmt.Printf("Nombre Completo: %s\n", dniResult.Data.NombreCompleto)
+    fmt.Printf("DNI: %s\n", dniResult.Data.DNI)
+}
+
+// Carnet de Extranjería consultation
+ceResult, err := client.ConsultCE("001234567")
+if err != nil {
+    log.Fatal(err)
+}
+
+if ceResult.Success {
+    fmt.Printf("Nombre: %s\n", ceResult.Data.NombreCompleto)
+}
+```
+
+### Funciones de Validación
+
+```go
+// Validar formato de documentos
+isValidRUC := sunatlib.IsValidRUC("20601030013")     // true
+isValidDNI := sunatlib.IsValidDNI("12345678")        // true  
+isValidCE := sunatlib.IsValidCE("001234567")         // true
+```
+
 ## API Reference
 
 ### SUNATClient
 
 #### Métodos
 
-- `NewSUNATClient(ruc, username, password, endpoint string) *SUNATClient`
+**Constructores:**
+- `NewSUNATClient(ruc, username, password, endpoint string) *SUNATClient` - DNI/CE gratuitos incluidos
+- `NewSUNATClientWithRUCService(ruc, username, password, endpoint, decolectaAPIKey string) *SUNATClient` - **New!** RUC + DNI/CE
+
+**Configuración de certificados:**
 - `SetCertificate(privateKeyPath, certificatePath string) error`
 - `SetCertificateFromPFX(pfxPath, password, tempDir string) error`
-- `SignXML(xmlContent []byte) ([]byte, error)` - **New!**
-- `SendToSUNAT(signedXML []byte, documentType, seriesNumber string) (*SUNATResponse, error)` - **New!**
+
+**Firma y envío a SUNAT:**
+- `SignXML(xmlContent []byte) ([]byte, error)`
+- `SendToSUNAT(signedXML []byte, documentType, seriesNumber string) (*SUNATResponse, error)`
 - `SignAndSendInvoice(xmlContent []byte, documentType, seriesNumber string) (*SUNATResponse, error)`
+
+**Servicios de consulta:** - **New!**
+- `ConsultRUC(ruc string) (*RUCBasicResponse, error)`
+- `ConsultRUCFull(ruc string) (*RUCFullResponse, error)`
+- `ConsultDNI(dni string) (*DNIResponse, error)`
+- `ConsultCE(ce string) (*DNIResponse, error)`
+
+**Limpieza:**
 - `Cleanup() error`
 
 ### SUNATResponse
@@ -232,6 +324,49 @@ response, _ := client.SendToSUNAT(signedXML, "01", "F001-00000001")
 
 - `SaveApplicationResponse(outputPath string) error` - Guarda el CDR
 
+### RUCBasicResponse / RUCFullResponse - **New!**
+
+#### Propiedades
+
+- `Success bool` - Indica si la consulta fue exitosa
+- `Data *RUCBasicData` / `Data *RUCFullData` - Datos de la empresa consultada
+- `Message string` - Mensaje de respuesta
+
+**RUCBasicData campos:**
+- `RUC string` - Número de RUC
+- `RazonSocial string` - Razón social de la empresa
+- `Estado string` - Estado del contribuyente
+- `Condicion string` - Condición del contribuyente
+- `Direccion string` - Dirección fiscal
+- `Distrito string`, `Provincia string`, `Departamento string` - Ubicación
+
+**RUCFullData campos adicionales:**
+- `ActividadEconomica string` - Actividad económica principal
+- `NumeroTrabajadores string` - Número de trabajadores
+- `TipoFacturacion string` - Tipo de sistema de facturación
+- `ComercioExterior string` - Si tiene actividad de comercio exterior
+
+### DNIResponse - **New!**
+
+#### Propiedades
+
+- `Success bool` - Indica si la consulta fue exitosa
+- `Data *DNIData` - Datos de la persona consultada
+- `Message string` - Mensaje de respuesta
+
+**DNIData campos:**
+- `DNI string` - Número de documento
+- `NombreCompleto string` - Nombre completo
+- `Nombres string` - Nombres de la persona
+- `ApellidoPaterno string` - Apellido paterno
+- `ApellidoMaterno string` - Apellido materno
+
+### Funciones de Validación - **New!**
+
+- `IsValidRUC(ruc string) bool` - Valida formato de RUC
+- `IsValidDNI(dni string) bool` - Valida formato de DNI
+- `IsValidCE(ce string) bool` - Valida formato de Carnet de Extranjería
+
 ### Utils
 
 #### Funciones
@@ -247,6 +382,8 @@ Ver la carpeta `examples/` para ejemplos completos:
 
 - `simple_example.go` - Uso básico de la librería
 - `advanced_example.go` - Manejo avanzado con validación de certificados
+- `flexible_usage.go` - Patrones avanzados de uso
+- `consultation_example.go` - **Nuevo!** Ejemplos de consulta RUC y DNI
 
 ## Limitaciones
 

@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-09-09
+
+### Added
+- **NEW**: RUC consultation service using DeColecta API
+  - `ConsultRUC()` - Basic company information lookup
+  - `ConsultRUCFull()` - Complete company information lookup
+  - Requires DeColecta API key (paid service)
+- **NEW**: DNI/CE consultation service using EsSalud (free)
+  - `ConsultDNI()` - DNI validation and person data retrieval
+  - `ConsultCE()` - Carnet de Extranjería validation
+  - Always available, no API key required
+- **NEW**: Document validation functions
+  - `IsValidRUC()` - RUC format validation
+  - `IsValidDNI()` - DNI format validation  
+  - `IsValidCE()` - CE format validation
+- **NEW**: Enhanced client constructors
+  - `NewSUNATClientWithRUCService()` - Client with RUC consultation enabled
+  - Basic client includes free DNI/CE services by default
+- Comprehensive consultation examples in `examples/consultation_example.go`
+- Updated documentation with consultation service usage
+
+### Enhanced
+- Separated signing and sending functionality for better control
+- `SignXML()` - Sign XML documents independently
+- `SendToSUNAT()` - Send pre-signed documents
+- Maintained backward compatibility with `SignAndSendInvoice()`
+
+### Services
+- **RUC Service**: DeColecta API integration (requires API key)
+  - Basic and full company information
+  - Real-time SUNAT data
+  - Commercial service with usage limits
+- **DNI/CE Service**: EsSalud integration (free)
+  - Person identity validation
+  - No registration required
+  - Always available
+
+### Breaking Changes
+- None - Fully backward compatible
+
+### Requirements
+- Go 1.19+
+- xmlsec1 system dependency
+- Valid SUNAT certificate
+- Optional: DeColecta API key for RUC services
+
 ## [1.0.0] - 2025-01-05
 
 ### Added

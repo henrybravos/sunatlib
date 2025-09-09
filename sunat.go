@@ -17,20 +17,35 @@ import (
 
 // SUNATClient handles interactions with SUNAT web services
 type SUNATClient struct {
-	RUC       string
-	Username  string
-	Password  string
-	Endpoint  string
-	signer    *signer.XMLSigner
+	RUC         string
+	Username    string
+	Password    string
+	Endpoint    string
+	signer      *signer.XMLSigner
+	rucService  *RUCService
+	dniService  *DNIService
 }
 
-// NewSUNATClient creates a new SUNAT client
+// NewSUNATClient creates a new SUNAT client with DNI service (free)
 func NewSUNATClient(ruc, username, password, endpoint string) *SUNATClient {
 	return &SUNATClient{
-		RUC:      ruc,
-		Username: username,
-		Password: password,
-		Endpoint: endpoint,
+		RUC:        ruc,
+		Username:   username,
+		Password:   password,
+		Endpoint:   endpoint,
+		dniService: NewDNIService(), // DNI always available (free)
+	}
+}
+
+// NewSUNATClientWithRUCService creates a SUNAT client with RUC consultation enabled (requires DeColecta API key)
+func NewSUNATClientWithRUCService(ruc, username, password, endpoint, decolectaAPIKey string) *SUNATClient {
+	return &SUNATClient{
+		RUC:        ruc,
+		Username:   username,
+		Password:   password,
+		Endpoint:   endpoint,
+		rucService: NewRUCService(decolectaAPIKey), // RUC requires paid API key
+		dniService: NewDNIService(),               // DNI always available (free)
 	}
 }
 
@@ -238,4 +253,36 @@ func (r *SUNATResponse) SaveApplicationResponse(outputPath string) error {
 	}
 
 	return os.WriteFile(outputPath, r.ApplicationResponse, 0644)
+}
+
+// ConsultRUC performs a basic RUC consultation using DeColecta API (requires API key)
+func (c *SUNATClient) ConsultRUC(ruc string) (*RUCBasicResponse, error) {
+	if c.rucService == nil {
+		return nil, fmt.Errorf("RUC service not available - use NewSUNATClientWithRUCService() with DeColecta API key")
+	}
+	return c.rucService.ConsultBasic(ruc)
+}
+
+// ConsultRUCFull performs a complete RUC consultation using DeColecta API (requires API key)
+func (c *SUNATClient) ConsultRUCFull(ruc string) (*RUCFullResponse, error) {
+	if c.rucService == nil {
+		return nil, fmt.Errorf("RUC service not available - use NewSUNATClientWithRUCService() with DeColecta API key")
+	}
+	return c.rucService.ConsultFull(ruc)
+}
+
+// ConsultDNI performs a DNI consultation using EsSalud service (free)
+func (c *SUNATClient) ConsultDNI(dni string) (*DNIResponse, error) {
+	if c.dniService == nil {
+		return nil, fmt.Errorf("DNI service not available")
+	}
+	return c.dniService.ConsultDNI(dni)
+}
+
+// ConsultCE performs a Carnet de Extranjería consultation using EsSalud service (free)
+func (c *SUNATClient) ConsultCE(ce string) (*DNIResponse, error) {
+	if c.dniService == nil {
+		return nil, fmt.Errorf("DNI service not available")
+	}
+	return c.dniService.ConsultCE(ce)
 }
