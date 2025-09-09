@@ -10,9 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2025-09-09
 
 ### Added
+- **NEW**: Independent consultation services (separate from billing)
+  - `ConsultationClient` - Independent client for document consultation
+  - `NewConsultationClient()` - Full consultation client (RUC + DNI)
+  - `NewRUCConsultationClient()` - RUC-only consultation client
+  - `NewDNIConsultationClient()` - DNI/CE-only consultation client (free)
 - **NEW**: RUC consultation service using DeColecta API
   - `ConsultRUC()` - Basic company information lookup
-  - `ConsultRUCFull()` - Complete company information lookup
+  - `ConsultRUCFull()` - Complete company information lookup  
   - Requires DeColecta API key (paid service)
 - **NEW**: DNI/CE consultation service using EsSalud (free)
   - `ConsultDNI()` - DNI validation and person data retrieval
@@ -22,13 +27,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `IsValidRUC()` - RUC format validation
   - `IsValidDNI()` - DNI format validation  
   - `IsValidCE()` - CE format validation
-- **NEW**: Enhanced client constructors
-  - `NewSUNATClientWithRUCService()` - Client with RUC consultation enabled
-  - Basic client includes free DNI/CE services by default
 - Comprehensive consultation examples in `examples/consultation_example.go`
-- Updated documentation with consultation service usage
+- Updated documentation with independent consultation service usage
 
-### Enhanced
+### Architecture
+- **Separation of Concerns**: Billing and consultation services are now independent
+- **SUNATClient**: Focused exclusively on electronic billing
+- **ConsultationClient**: Dedicated to document consultation services
+- Modular design allows using only needed services
+
+### Enhanced  
 - Separated signing and sending functionality for better control
 - `SignXML()` - Sign XML documents independently
 - `SendToSUNAT()` - Send pre-signed documents
@@ -46,12 +54,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 - None - Fully backward compatible
+- All existing billing functionality unchanged
 
 ### Requirements
 - Go 1.19+
 - xmlsec1 system dependency
-- Valid SUNAT certificate
-- Optional: DeColecta API key for RUC services
+- Valid SUNAT certificate (for billing)
+- Optional: DeColecta API key (for RUC consultation services)
 
 ## [1.0.0] - 2025-01-05
 

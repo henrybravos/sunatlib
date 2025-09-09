@@ -206,22 +206,20 @@ signedXML, _ := os.ReadFile("signed_invoice.xml")
 response, _ := client.SendToSUNAT(signedXML, "01", "F001-00000001")
 ```
 
-## Servicios de Consulta (Nuevo)
+## Servicios de Consulta (Independientes de Facturación)
 
-### Consulta RUC con DeColecta (Requiere API Key - Pago)
+### Cliente de Consulta Completo
 
 ```go
-// Cliente con servicio RUC habilitado (requiere API key de DeColecta)
-client := sunatlib.NewSUNATClientWithRUCService(
-    "20123456789",                                    // RUC
-    "MODDATOS",                                       // Username  
-    "moddatos",                                       // Password
-    "https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService", // Endpoint
-    "your_decolecta_api_key",                        // DeColecta API Key (pago)
-)
+// Cliente independiente con ambos servicios (RUC + DNI)
+consultationClient := sunatlib.NewConsultationClient("your_decolecta_api_key")
+
+// O clientes específicos:
+rucClient := sunatlib.NewRUCConsultationClient("your_decolecta_api_key")  // Solo RUC
+dniClient := sunatlib.NewDNIConsultationClient()                          // Solo DNI/CE (gratuito)
 
 // Consulta básica de RUC
-rucResult, err := client.ConsultRUC("20601030013")
+rucResult, err := consultationClient.ConsultRUC("20601030013")
 if err != nil {
     log.Fatal(err)
 }
@@ -233,7 +231,7 @@ if rucResult.Success {
 }
 
 // Consulta completa de RUC (incluye más detalles)
-rucFullResult, err := client.ConsultRUCFull("20601030013")
+rucFullResult, err := consultationClient.ConsultRUCFull("20601030013")
 if err != nil {
     log.Fatal(err)
 }
@@ -248,11 +246,10 @@ if rucFullResult.Success {
 ### Consulta DNI con EsSalud (Gratuito)
 
 ```go
-// DNI consultation (available in both client types, always free)
-// Works with basic client too
-basicClient := sunatlib.NewSUNATClient("20123456789", "user", "pass", "endpoint")
+// DNI consultation (always free, independent from billing)
+dniClient := sunatlib.NewDNIConsultationClient()
 
-dniResult, err := basicClient.ConsultDNI("12345678")
+dniResult, err := dniClient.ConsultDNI("12345678")
 if err != nil {
     log.Fatal(err)
 }
@@ -289,8 +286,12 @@ isValidCE := sunatlib.IsValidCE("001234567")         // true
 #### Métodos
 
 **Constructores:**
-- `NewSUNATClient(ruc, username, password, endpoint string) *SUNATClient` - DNI/CE gratuitos incluidos
-- `NewSUNATClientWithRUCService(ruc, username, password, endpoint, decolectaAPIKey string) *SUNATClient` - **New!** RUC + DNI/CE
+- `NewSUNATClient(ruc, username, password, endpoint string) *SUNATClient` - Cliente de facturación electrónica
+
+**Constructores de Consulta:** - **New!**
+- `NewConsultationClient(decolectaAPIKey string) *ConsultationClient` - RUC + DNI/CE
+- `NewRUCConsultationClient(decolectaAPIKey string) *ConsultationClient` - Solo RUC
+- `NewDNIConsultationClient() *ConsultationClient` - Solo DNI/CE (gratuito)
 
 **Configuración de certificados:**
 - `SetCertificate(privateKeyPath, certificatePath string) error`
@@ -301,11 +302,13 @@ isValidCE := sunatlib.IsValidCE("001234567")         // true
 - `SendToSUNAT(signedXML []byte, documentType, seriesNumber string) (*SUNATResponse, error)`
 - `SignAndSendInvoice(xmlContent []byte, documentType, seriesNumber string) (*SUNATResponse, error)`
 
-**Servicios de consulta:** - **New!**
-- `ConsultRUC(ruc string) (*RUCBasicResponse, error)`
-- `ConsultRUCFull(ruc string) (*RUCFullResponse, error)`
-- `ConsultDNI(dni string) (*DNIResponse, error)`
-- `ConsultCE(ce string) (*DNIResponse, error)`
+### ConsultationClient - **New!**
+
+**Métodos de consulta:**
+- `ConsultRUC(ruc string) (*RUCBasicResponse, error)` - Consulta básica RUC
+- `ConsultRUCFull(ruc string) (*RUCFullResponse, error)` - Consulta completa RUC
+- `ConsultDNI(dni string) (*DNIResponse, error)` - Consulta DNI
+- `ConsultCE(ce string) (*DNIResponse, error)` - Consulta CE
 
 **Limpieza:**
 - `Cleanup() error`

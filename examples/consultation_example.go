@@ -8,19 +8,19 @@ import (
 )
 
 func main() {
-	// Create SUNAT client with RUC consultation service (requires DeColecta API key)
-	// Replace with your actual credentials and DeColecta API key
-	client := sunatlib.NewSUNATClientWithRUCService(
-		"20123456789",                                  // Your RUC
-		"USERNAME",                                     // SOL Username  
-		"PASSWORD",                                     // SOL Password
-		"https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService", // Endpoint
-		"your_decolecta_api_key",                      // Your DeColecta API Key
-	)
+	// Create consultation client (independent from billing)
+	// Option 1: Client with both RUC and DNI services
+	consultationClient := sunatlib.NewConsultationClient("your_decolecta_api_key")
+	
+	// Option 2: Only RUC consultation
+	// rucClient := sunatlib.NewRUCConsultationClient("your_decolecta_api_key")
+	
+	// Option 3: Only DNI consultation (free)
+	// dniClient := sunatlib.NewDNIConsultationClient()
 
 	// Example 1: Basic RUC consultation
 	fmt.Println("=== Consulta Básica de RUC ===")
-	rucResult, err := client.ConsultRUC("20601030013")
+	rucResult, err := consultationClient.ConsultRUC("20601030013")
 	if err != nil {
 		log.Printf("Error consultando RUC: %v", err)
 	} else if rucResult.Success {
@@ -36,7 +36,7 @@ func main() {
 	}
 
 	fmt.Println("\n=== Consulta Completa de RUC ===")
-	rucFullResult, err := client.ConsultRUCFull("20601030013")
+	rucFullResult, err := consultationClient.ConsultRUCFull("20601030013")
 	if err != nil {
 		log.Printf("Error consultando RUC completo: %v", err)
 	} else if rucFullResult.Success {
@@ -53,7 +53,7 @@ func main() {
 
 	// Example 2: DNI consultation
 	fmt.Println("\n=== Consulta de DNI ===")
-	dniResult, err := client.ConsultDNI("12345678")
+	dniResult, err := consultationClient.ConsultDNI("12345678")
 	if err != nil {
 		log.Printf("Error consultando DNI: %v", err)
 	} else if dniResult.Success {
@@ -68,7 +68,7 @@ func main() {
 
 	// Example 3: Carnet de Extranjería consultation
 	fmt.Println("\n=== Consulta de Carnet de Extranjería ===")
-	ceResult, err := client.ConsultCE("001234567")
+	ceResult, err := consultationClient.ConsultCE("001234567")
 	if err != nil {
 		log.Printf("Error consultando CE: %v", err)
 	} else if ceResult.Success {

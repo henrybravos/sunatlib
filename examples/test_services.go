@@ -3,20 +3,21 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/henrybravos/sunatlib"
 )
 
 func main() {
-	// Test RUC service (requires DeColecta API key)
-	fmt.Println("=== Probando servicio RUC (DeColecta - Pago) ===")
-	client := sunatlib.NewSUNATClientWithRUCService(
-		"20123456789", 
-		"MODDATOS", 
-		"moddatos", 
-		"https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService",
-		"sk_10247.COmJdrgJETSqcG5lN503egF10e5UsyKU",
-	)
+	// Create independent consultation client
+	fmt.Println("=== Probando servicios de consulta (Independientes) ===")
+	
+	// Full consultation client (RUC + DNI)
+	client := sunatlib.NewConsultationClient(os.Getenv("DECOLECTA_API_KEY"))
+	
+	// Or use specific clients:
+	// rucClient := sunatlib.NewRUCConsultationClient(os.Getenv("DECOLECTA_API_KEY"))
+	// dniClient := sunatlib.NewDNIConsultationClient() // Free
 	
 	rucResult, err := client.ConsultRUC("20601030013")
 	if err != nil {
