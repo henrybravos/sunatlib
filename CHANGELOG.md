@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - 2025-09-09
+## [1.2.0] - 2025-09-09
 
 ### Added
 - **NEW**: Independent consultation services (separate from billing)
@@ -61,6 +61,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - xmlsec1 system dependency
 - Valid SUNAT certificate (for billing)
 - Optional: DeColecta API key (for RUC consultation services)
+
+## [1.1.0] - 2025-09-09
+
+### Added
+- **NEW**: RUC and DNI consultation services integrated with SUNATClient
+- **NEW**: RUC consultation service using DeColecta API
+- **NEW**: DNI/CE consultation service using EsSalud (free)
+- **NEW**: Document validation functions
+- **NEW**: Enhanced SUNATClient constructors with consultation services
+- Comprehensive consultation examples
+- Updated documentation
+
+### Enhanced
+- Separated signing and sending functionality for better control
+- `SignXML()` - Sign XML documents independently
+- `SendToSUNAT()` - Send pre-signed documents
+- Maintained backward compatibility with `SignAndSendInvoice()`
+
+### Breaking Changes
+- None - Fully backward compatible
 
 ## [1.0.0] - 2025-01-05
 
