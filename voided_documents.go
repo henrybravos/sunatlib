@@ -374,6 +374,256 @@ func (doc *VoidedDocument) Validate() error {
 	return nil
 }
 
+// TicketStatusResponse represents the response from ticket status query
+type TicketStatusResponse struct {
+	Success           bool
+	Message           string
+	Ticket            string
+	StatusCode        string      // SUNAT status code
+	StatusDescription string      // SUNAT status description
+	ProcessDate       time.Time   // Date when the document was processed
+	ResponseXML       []byte      // Full SOAP response
+	ApplicationResponse []byte    // CDR ZIP content if available
+	Error             error
+}
+
+// GetTicketStatusDescription returns a human-readable description of the ticket status
+func (r *TicketStatusResponse) GetTicketStatusDescription() string {
+	switch r.StatusCode {
+	case "0":
+		return "Procesado correctamente"
+	case "98":
+		return "En proceso"
+	case "99":
+		return "Procesado con errores"
+	default:
+		return r.StatusDescription
+	}
+}
+
+// IsProcessed returns true if the ticket has been processed (successfully or with errors)
+func (r *TicketStatusResponse) IsProcessed() bool {
+	return r.StatusCode == "0" || r.StatusCode == "99"
+}
+
+// IsSuccessful returns true if the ticket was processed successfully
+func (r *TicketStatusResponse) IsSuccessful() bool {
+	return r.StatusCode == "0"
+}
+
+// IsInProgress returns true if the ticket is still being processed
+func (r *TicketStatusResponse) IsInProgress() bool {
+	return r.StatusCode == "98"
+}
+
+// HasErrors returns true if the ticket was processed but with errors
+func (r *TicketStatusResponse) HasErrors() bool {
+	return r.StatusCode == "99"
+}
+
+// GetApplicationResponse returns the CDR response data if available
+func (r *TicketStatusResponse) GetApplicationResponse() []byte {
+	return r.ApplicationResponse
+}
+
+// HasApplicationResponse returns true if CDR response data is available
+func (r *TicketStatusResponse) HasApplicationResponse() bool {
+	return len(r.ApplicationResponse) > 0
+}
+
+// QueryVoidedDocumentsTicket queries the status of a voided documents communication ticket
+// This is a more specific and enhanced version of GetVoidedDocumentsStatus
+func (c *SUNATClient) QueryVoidedDocumentsTicket(ticket string) (*TicketStatusResponse, error) {
+	if ticket == "" {
+		return nil, fmt.Errorf("ticket number is required")
+	}
+
+	// Build SOAP envelope for getStatus
+	soapBody := fmt.Sprintf(`<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://service.sunat.gob.pe" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+  <soapenv:Header>
+    <wsse:Security>
+      <wsse:UsernameToken>
+        <wsse:Username>%s%s</wsse:Username>
+        <wsse:Password>%s</wsse:Password>
+      </wsse:UsernameToken>
+    </wsse:Security>
+  </soapenv:Header>
+  <soapenv:Body>
+    <ser:getStatus>
+      <ticket>%s</ticket>
+    </ser:getStatus>
+  </soapenv:Body>
+</soapenv:Envelope>`, c.RUC, c.Username, c.Password, ticket)
+
+	// Send HTTP request
+	req, err := http.NewRequest("POST", c.Endpoint, bytes.NewBuffer([]byte(soapBody)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "text/xml; charset=utf-8")
+	req.Header.Set("SOAPAction", "urn:getStatus")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send HTTP request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	return c.parseTicketStatusResponse(responseData, ticket)
+}
+
+// parseTicketStatusResponse parses SUNAT's response for ticket status queries
+func (c *SUNATClient) parseTicketStatusResponse(responseData []byte, ticket string) (*TicketStatusResponse, error) {
+	responseStr := string(responseData)
+	response := &TicketStatusResponse{
+		ResponseXML: responseData,
+		Ticket:      ticket,
+	}
+
+	// Check for SOAP fault
+	if strings.Contains(responseStr, "<soap-env:Fault") || strings.Contains(responseStr, "<soap:Fault") {
+		response.Success = false
+
+		// Extract fault string
+		if start := strings.Index(responseStr, "<faultstring>"); start != -1 {
+			start += 13
+			if end := strings.Index(responseStr[start:], "</faultstring>"); end != -1 {
+				response.Message = responseStr[start : start+end]
+				// Decode HTML entities
+				response.Message = strings.ReplaceAll(response.Message, "&#243;", "ó")
+				response.Message = strings.ReplaceAll(response.Message, "&lt;", "<")
+				response.Message = strings.ReplaceAll(response.Message, "&gt;", ">")
+				response.Message = strings.ReplaceAll(response.Message, "&amp;", "&")
+			}
+		}
+
+		return response, nil
+	}
+
+	// Check for successful response
+	if strings.Contains(responseStr, "<br:getStatusResponse") || strings.Contains(responseStr, "getStatusResponse") {
+		response.Success = true
+
+		// Extract status code
+		if start := strings.Index(responseStr, "<statusCode>"); start != -1 {
+			start += 12
+			if end := strings.Index(responseStr[start:], "</statusCode>"); end != -1 {
+				response.StatusCode = responseStr[start : start+end]
+			}
+		}
+
+		// Set status description based on code
+		response.StatusDescription = response.GetTicketStatusDescription()
+
+		// Extract content (CDR) if available and status is successful
+		if response.StatusCode == "0" {
+			if start := strings.Index(responseStr, "<content>"); start != -1 {
+				start += 9
+				if end := strings.Index(responseStr[start:], "</content>"); end != -1 {
+					contentB64 := responseStr[start : start+end]
+					if decodedContent, err := base64.StdEncoding.DecodeString(contentB64); err == nil {
+						response.ApplicationResponse = decodedContent
+					}
+				}
+			}
+			response.Message = "Comunicación de baja procesada exitosamente"
+		} else if response.StatusCode == "98" {
+			response.Message = "Comunicación de baja en proceso de validación"
+		} else if response.StatusCode == "99" {
+			response.Message = "Comunicación de baja procesada con errores"
+			// Try to extract error content for more details
+			if start := strings.Index(responseStr, "<content>"); start != -1 {
+				start += 9
+				if end := strings.Index(responseStr[start:], "</content>"); end != -1 {
+					contentB64 := responseStr[start : start+end]
+					if decodedContent, err := base64.StdEncoding.DecodeString(contentB64); err == nil {
+						response.ApplicationResponse = decodedContent
+					}
+				}
+			}
+		}
+
+		return response, nil
+	}
+
+	response.Success = false
+	response.Message = "Respuesta no reconocida de SUNAT para consulta de ticket"
+	return response, nil
+}
+
+// WaitForTicketProcessing waits for a ticket to be processed, polling every interval
+// Returns the final status response when processing is complete or timeout is reached
+func (c *SUNATClient) WaitForTicketProcessing(ticket string, maxWaitTime time.Duration, pollInterval time.Duration) (*TicketStatusResponse, error) {
+	if pollInterval <= 0 {
+		pollInterval = 30 * time.Second // Default to 30 seconds
+	}
+
+	startTime := time.Now()
+
+	for {
+		response, err := c.QueryVoidedDocumentsTicket(ticket)
+		if err != nil {
+			return nil, fmt.Errorf("error querying ticket: %w", err)
+		}
+
+		// Return immediately if there's an error in the response
+		if !response.Success {
+			return response, nil
+		}
+
+		// Return if processing is complete (success or error)
+		if response.IsProcessed() {
+			return response, nil
+		}
+
+		// Check timeout
+		if time.Since(startTime) >= maxWaitTime {
+			response.Message = "Timeout esperando procesamiento del ticket"
+			return response, nil
+		}
+
+		// Wait before next poll
+		time.Sleep(pollInterval)
+	}
+}
+
+// BatchQueryTickets queries multiple tickets and returns their status
+func (c *SUNATClient) BatchQueryTickets(tickets []string) ([]*TicketStatusResponse, error) {
+	if len(tickets) == 0 {
+		return nil, fmt.Errorf("no tickets provided")
+	}
+
+	responses := make([]*TicketStatusResponse, 0, len(tickets))
+
+	for _, ticket := range tickets {
+		response, err := c.QueryVoidedDocumentsTicket(ticket)
+		if err != nil {
+			// Create error response for this ticket
+			errorResponse := &TicketStatusResponse{
+				Success: false,
+				Ticket:  ticket,
+				Message: fmt.Sprintf("Error querying ticket: %v", err),
+				Error:   err,
+			}
+			responses = append(responses, errorResponse)
+		} else {
+			responses = append(responses, response)
+		}
+
+		// Small delay to avoid overwhelming SUNAT servers
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return responses, nil
+}
+
 // GenerateVoidedDocumentsSeries generates a series number for voided documents
 // Format: RA-YYYYMMDD-### where ### is a sequential number
 func GenerateVoidedDocumentsSeries(referenceDate time.Time, sequential int) string {

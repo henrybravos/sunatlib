@@ -123,3 +123,4 @@ func GetCertificateInfo(certPath string) (map[string]string, error) {
 
 	return info, nil
 }
+

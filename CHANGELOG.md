@@ -7,6 +7,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-01-18
+
+### Added
+- **Enhanced Ticket Query System for Voided Documents Communications**
+  - `QueryVoidedDocumentsTicket()` - Advanced ticket status query with detailed response information
+  - `WaitForTicketProcessing()` - Automatic polling with configurable timeout and polling intervals
+  - `BatchQueryTickets()` - Query multiple tickets in a single batch operation
+  - New `TicketStatusResponse` struct with comprehensive status information and convenience methods
+
+- **Convenience Methods for Ticket Status Management**
+  - `IsSuccessful()` - Check if ticket was processed successfully (status code "0")
+  - `IsInProgress()` - Check if ticket is still being processed (status code "98")
+  - `HasErrors()` - Check if ticket was processed with errors (status code "99")
+  - `IsProcessed()` - Check if ticket processing is complete (success or error)
+  - `GetTicketStatusDescription()` - Human-readable status descriptions in Spanish
+  - `HasApplicationResponse()` - Check if CDR or error data is available
+  - `GetApplicationResponse()` - Get CDR or error data as byte array for user handling
+
+- **Enhanced Response Parsing and Error Handling**
+  - Improved SOAP fault detection and error message extraction
+  - Better HTML entity decoding for Spanish characters (ó, <, >, &)
+  - Support for multiple SOAP response formats and namespaces
+  - Enhanced error message parsing with proper character encoding
+
+- **Library Usage Examples**
+  - `ticket_query_example.go` - Comprehensive examples of all ticket query functionality
+  - `library_usage_example.go` - Best practices for library integration and data handling
+
+### Changed
+- **Library Philosophy Enhancement - User Control Over Data**
+  - Library now strictly follows "provide data, user decides what to do" principle
+  - Removed automatic file saving methods - users have complete control over data handling
+  - Enhanced flexibility for integration into different systems and workflows
+  - Users can now save, process, store, or transmit data according to their specific needs
+
+- **Improved Documentation and API Reference**
+  - Updated README with comprehensive ticket query functionality documentation
+  - Added library philosophy section emphasizing user control over data handling
+  - Enhanced API reference with all new methods and their usage patterns
+  - Added real-world integration examples and patterns
+
+### Improved
+- **Better Error Handling and Status Management**
+  - Enhanced error handling in ticket status queries with detailed error information
+  - Improved status code mapping for all SUNAT response scenarios
+  - More robust response parsing supporting multiple SOAP formats
+  - Better separation of concerns between data retrieval and data handling
+
+- **Code Quality and Maintainability**
+  - Cleaner separation between library functionality and user data handling
+  - Removed utility functions that imposed file system operations
+  - Enhanced modularity for better testing and integration
+  - Improved code documentation and inline comments
+
+### Technical Details
+- Enhanced SOAP response parsing with support for both `<br:getStatusResponse>` and `getStatusResponse` formats
+- Improved base64 decoding for CDR and error content extraction
+- Better handling of SUNAT status codes: "0" (success), "98" (processing), "99" (errors)
+- Enhanced timeout and polling mechanisms for long-running processes
+
+### Breaking Changes
+- **Removed Methods** (replaced with better alternatives):
+  - `SaveApplicationResponse()` method removed from `TicketStatusResponse`
+  - Users should now use `GetApplicationResponse()` and handle data as needed
+- **Philosophy Change**: Library no longer performs file operations automatically
+- All other functionality remains fully backward compatible
+
 ## [1.3.0] - 2025-09-18
 
 ### Added

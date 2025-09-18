@@ -335,10 +335,85 @@ if err != nil {
 if response.Success {
     fmt.Printf("✅ Comunicación enviada. Ticket: %s\n", response.Ticket)
 
-    // Consultar estado usando el ticket
+    // Consultar estado usando el ticket (método básico)
     statusResponse, err := client.GetVoidedDocumentsStatus(response.Ticket)
     if err == nil && statusResponse.Success {
         statusResponse.SaveApplicationResponse("baja_cdr.zip")
+    }
+
+    // O usar el método mejorado para consulta de tickets
+    ticketResponse, err := client.QueryVoidedDocumentsTicket(response.Ticket)
+    if err == nil {
+        if ticketResponse.IsSuccessful() {
+            fmt.Println("✅ Procesado exitosamente")
+            ticketResponse.SaveApplicationResponse("baja_cdr.zip")
+        } else if ticketResponse.IsInProgress() {
+            fmt.Println("⏳ Aún en proceso...")
+        } else if ticketResponse.HasErrors() {
+            fmt.Println("❌ Procesado con errores")
+        }
+    }
+}
+```
+
+### Consulta Avanzada de Tickets de Comunicación de Baja - **Nuevo!**
+
+**🎯 Filosofía de la Librería:** Esta librería proporciona los datos, el usuario decide qué hacer con ellos. No fuerza dónde o cómo guardar archivos.
+
+```go
+// Consulta individual de ticket con información detallada
+ticketResponse, err := client.QueryVoidedDocumentsTicket("12345678901234567890")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Verificar estado usando métodos de conveniencia
+if ticketResponse.IsSuccessful() {
+    fmt.Println("✅ Comunicación procesada exitosamente")
+
+    // La librería proporciona los datos, el usuario decide qué hacer
+    if ticketResponse.HasApplicationResponse() {
+        cdrData := ticketResponse.GetApplicationResponse()
+
+        // El usuario puede:
+        // 1. Guardar donde desee
+        os.WriteFile("mi_directorio/cdr.zip", cdrData, 0644)
+
+        // 2. Procesar directamente
+        fmt.Printf("CDR size: %d bytes\n", len(cdrData))
+
+        // 3. Enviar por email, subir a la nube, guardar en BD, etc.
+        // sendEmail(cdrData)
+        // uploadToCloud(cdrData)
+        // saveToDatabase(ticketResponse.Ticket, cdrData)
+    }
+} else if ticketResponse.IsInProgress() {
+    fmt.Println("⏳ Comunicación en proceso...")
+} else if ticketResponse.HasErrors() {
+    fmt.Println("❌ Comunicación procesada con errores")
+
+    // Obtener detalles del error para análisis del usuario
+    if ticketResponse.HasApplicationResponse() {
+        errorData := ticketResponse.GetApplicationResponse()
+        // Usuario decide cómo manejar los errores
+        analyzeErrors(errorData)
+        logToSystem(ticketResponse.Ticket, errorData)
+    }
+}
+
+// Esperar procesamiento con timeout
+finalResponse, err := client.WaitForTicketProcessing(
+    "12345678901234567890",
+    10*time.Minute, // Tiempo máximo de espera
+    30*time.Second, // Intervalo de consulta
+)
+
+// Consulta múltiple de tickets
+tickets := []string{"ticket1", "ticket2", "ticket3"}
+responses, err := client.BatchQueryTickets(tickets)
+if err == nil {
+    for _, response := range responses {
+        fmt.Printf("Ticket %s: %s\n", response.Ticket, response.GetTicketStatusDescription())
     }
 }
 ```
@@ -469,6 +544,9 @@ Para el ambiente BETA, usar las credenciales estándar de SUNAT:
 **Comunicaciones de Baja:** - **New!**
 - `SendVoidedDocuments(request *VoidedDocumentsRequest) (*VoidedDocumentsResponse, error)`
 - `GetVoidedDocumentsStatus(ticket string) (*SUNATResponse, error)`
+- `QueryVoidedDocumentsTicket(ticket string) (*TicketStatusResponse, error)` - **Nuevo!**
+- `WaitForTicketProcessing(ticket string, maxWaitTime, pollInterval time.Duration) (*TicketStatusResponse, error)` - **Nuevo!**
+- `BatchQueryTickets(tickets []string) ([]*TicketStatusResponse, error)` - **Nuevo!**
 - `GenerateVoidedDocumentsXML(request *VoidedDocumentsRequest) ([]byte, error)`
 - `GenerateVoidedDocumentsSeries(referenceDate time.Time, sequential int) string`
 
@@ -525,6 +603,30 @@ Para el ambiente BETA, usar las credenciales estándar de SUNAT:
 #### Métodos
 
 - `SaveApplicationResponse(outputPath string) error` - Guarda el CDR
+
+### TicketStatusResponse - **New!**
+
+#### Propiedades
+
+- `Success bool` - Indica si la consulta fue exitosa
+- `Message string` - Mensaje de respuesta
+- `Ticket string` - Número de ticket consultado
+- `StatusCode string` - Código de estado de SUNAT (0=Exitoso, 98=En proceso, 99=Con errores)
+- `StatusDescription string` - Descripción del estado
+- `ProcessDate time.Time` - Fecha de procesamiento
+- `ResponseXML []byte` - XML completo de respuesta
+- `ApplicationResponse []byte` - CDR en formato ZIP si está disponible
+- `Error error` - Error si lo hubo
+
+#### Métodos
+
+- `GetTicketStatusDescription() string` - Descripción legible del estado del ticket
+- `IsProcessed() bool` - True si el ticket fue procesado (exitoso o con errores)
+- `IsSuccessful() bool` - True si el ticket fue procesado exitosamente
+- `IsInProgress() bool` - True si el ticket aún está en proceso
+- `HasErrors() bool` - True si el ticket fue procesado con errores
+- `GetApplicationResponse() []byte` - Obtiene los datos del CDR/respuesta
+- `HasApplicationResponse() bool` - True si hay datos de respuesta disponibles
 
 ### RUCBasicResponse / RUCFullResponse - **New!**
 
@@ -589,6 +691,7 @@ Ver la carpeta `examples/` para ejemplos completos:
 - `document_validation_example.go` - **Nuevo!** Ejemplos de validación de documentos
 - `beta_testing_example.go` - **Nuevo!** Ejemplos de testing con endpoints BETA
 - `integrated_example.go` - **Nuevo!** Ejemplo completo integrando todas las funcionalidades
+- `ticket_query_example.go` - **Nuevo!** Ejemplos de consulta avanzada de tickets de comunicación de baja
 
 ## Limitaciones
 
