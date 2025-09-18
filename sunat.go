@@ -240,3 +240,20 @@ func (r *SUNATResponse) SaveApplicationResponse(outputPath string) error {
 	return os.WriteFile(outputPath, r.ApplicationResponse, 0644)
 }
 
+// NewVoidedDocumentsClient creates a new SUNAT client for voided documents (PRODUCTION)
+func NewVoidedDocumentsClient(ruc, username, password string) *SUNATClient {
+	return NewSUNATClient(ruc, username, password, GetBillServiceEndpoint(Production))
+}
+
+// NewVoidedDocumentsClientBeta creates a new SUNAT client for voided documents (BETA/Testing)
+func NewVoidedDocumentsClientBeta(ruc, username, password string) *SUNATClient {
+	return NewSUNATClient(ruc, username, password, GetBillServiceEndpoint(Beta))
+}
+
+// NewDocumentValidationClient creates a new document validation client with credentials (PRODUCTION)
+func NewDocumentValidationClient(ruc, username, password string) *DocumentValidationClient {
+	return NewDocumentValidationClientWithCredentials(ruc, username, password)
+}
+
+
+

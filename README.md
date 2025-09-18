@@ -12,6 +12,8 @@ Una librería en Go para firmar documentos XML y enviarlos a SUNAT (Superintende
 - ✅ Procesamiento de respuestas CDR (Constancia de Recepción)
 - ✅ **Consulta RUC usando API DeColecta (Pago - Nuevo)**
 - ✅ **Consulta DNI/CE usando servicio EsSalud (Gratuito - Nuevo)**
+- ✅ **Comunicación de Baja (Anulación de Documentos) - Nuevo**
+- ✅ **Consulta de Validez de Documentos Electrónicos - Nuevo**
 
 ## Requisitos
 
@@ -275,9 +277,165 @@ if ceResult.Success {
 ```go
 // Validar formato de documentos
 isValidRUC := sunatlib.IsValidRUC("20601030013")     // true
-isValidDNI := sunatlib.IsValidDNI("12345678")        // true  
+isValidDNI := sunatlib.IsValidDNI("12345678")        // true
 isValidCE := sunatlib.IsValidCE("001234567")         // true
 ```
+
+## Comunicación de Baja (Anulación de Documentos) - **Nuevo!**
+
+### Envío de Comunicación de Baja
+
+```go
+// Crear cliente para comunicaciones de baja (PRODUCCIÓN)
+client := sunatlib.NewVoidedDocumentsClient("20123456789", "MODDATOS", "moddatos")
+defer client.Cleanup()
+
+// Para pruebas, usar cliente BETA:
+// client := sunatlib.NewVoidedDocumentsClientBeta("20123456789", "MODDATOS", "moddatos")
+
+// Configurar certificado
+err := client.SetCertificateFromPFX("certificate.pfx", "password", "/tmp/certs")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Crear solicitud de baja
+now := time.Now()
+referenceDate := now.AddDate(0, 0, -1) // Documentos de ayer
+
+request := &sunatlib.VoidedDocumentsRequest{
+    RUC:           "20123456789",
+    CompanyName:   "MI EMPRESA S.A.C.",
+    SeriesNumber:  sunatlib.GenerateVoidedDocumentsSeries(referenceDate, 1), // RA-YYYYMMDD-001
+    IssueDate:     now,
+    ReferenceDate: referenceDate,
+    Description:   "Comunicación de baja de documentos",
+    Documents: []sunatlib.VoidedDocument{
+        {
+            DocumentTypeCode: "01",     // Factura
+            DocumentSeries:   "F001",   // Serie
+            DocumentNumber:   "000123", // Número
+            VoidedReason:     "Error en datos del cliente",
+        },
+        {
+            DocumentTypeCode: "03",     // Boleta
+            DocumentSeries:   "B001",   // Serie
+            DocumentNumber:   "000456", // Número
+            VoidedReason:     "Duplicado por error del sistema",
+        },
+    },
+}
+
+// Enviar comunicación de baja
+response, err := client.SendVoidedDocuments(request)
+if err != nil {
+    log.Fatal(err)
+}
+
+if response.Success {
+    fmt.Printf("✅ Comunicación enviada. Ticket: %s\n", response.Ticket)
+
+    // Consultar estado usando el ticket
+    statusResponse, err := client.GetVoidedDocumentsStatus(response.Ticket)
+    if err == nil && statusResponse.Success {
+        statusResponse.SaveApplicationResponse("baja_cdr.zip")
+    }
+}
+```
+
+## Consulta de Validez de Documentos Electrónicos - **Nuevo!**
+
+### Validación de Documentos con SOAP SUNAT
+
+```go
+// Crear cliente de validación con credenciales SOL (PRODUCCIÓN)
+client := sunatlib.NewDocumentValidationClient(
+    "20123456789", // RUC
+    "MODDATOS",    // Usuario SOL
+    "moddatos",    // Clave SOL
+)
+
+// Para pruebas, usar cliente BETA:
+// client := sunatlib.NewDocumentValidationClientBeta("20123456789", "MODDATOS", "moddatos")
+
+// Validar una factura
+response, err := client.ValidateInvoice(
+    "20123456789", // RUC emisor
+    "F001",        // Serie
+    "000123",      // Número
+    "15/01/2025",  // Fecha emisión (DD/MM/YYYY)
+    "118.00",      // Importe total
+)
+
+if err != nil {
+    log.Fatal(err)
+}
+
+if response.Success {
+    fmt.Printf("✅ Documento válido: %t\n", response.IsDocumentValid())
+    fmt.Printf("📄 Estado: %s\n", response.GetStatusDescription())
+
+    if response.IsValid {
+        fmt.Println("🎯 Documento VÁLIDO en SUNAT")
+    } else {
+        fmt.Println("❌ Documento INVÁLIDO")
+    }
+} else {
+    fmt.Printf("❌ Error: %s\n", response.GetErrorMessage())
+}
+
+// Otros métodos de validación disponibles:
+receiptResp, _ := client.ValidateReceipt("20123456789", "B001", "000456", "15/01/2025", "59.00")
+creditNoteResp, _ := client.ValidateCreditNote("20123456789", "FC01", "000001", "15/01/2025", "23.60")
+debitNoteResp, _ := client.ValidateDebitNote("20123456789", "FD01", "000001", "15/01/2025", "15.00")
+
+// Consulta básica de estado (sin fecha ni importe)
+statusResp, _ := client.CheckDocumentStatus("20123456789", "01", "F001", "000789")
+```
+
+## Endpoints y Ambientes - **Nuevo!**
+
+### Endpoints de Producción vs Beta/Pruebas
+
+La librería incluye soporte completo para endpoints tanto de producción como de pruebas (BETA):
+
+```go
+// ENDPOINTS DE PRODUCCIÓN
+// Facturación electrónica
+client := sunatlib.NewVoidedDocumentsClient("20123456789", "USUARIO", "PASSWORD")
+
+// Validación de documentos
+validationClient := sunatlib.NewDocumentValidationClient("20123456789", "USUARIO", "PASSWORD")
+
+// ENDPOINTS DE PRUEBAS (BETA)
+// Facturación electrónica (para testing)
+betaClient := sunatlib.NewVoidedDocumentsClientBeta("20123456789", "MODDATOS", "moddatos")
+
+// Validación de documentos (para testing)
+betaValidationClient := sunatlib.NewDocumentValidationClientBeta("20123456789", "MODDATOS", "moddatos")
+```
+
+### Endpoints Disponibles
+
+**Producción:**
+- Facturación: `https://e-factura.sunat.gob.pe/ol-ti-itcpfegem/billService`
+- Validación: `https://e-factura.sunat.gob.pe/ol-it-wsconsvalidcpe/billValidService`
+
+**Beta/Pruebas:**
+- Facturación: `https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService`
+- Validación: `https://e-beta.sunat.gob.pe/ol-it-wsconsvalidcpe/billValidService`
+
+### Credenciales de Prueba
+
+Para el ambiente BETA, usar las credenciales estándar de SUNAT:
+- **Usuario:** MODDATOS
+- **Contraseña:** moddatos
+
+### Flujo Recomendado de Desarrollo
+
+1. **Desarrollo:** Usar endpoints BETA con credenciales de prueba
+2. **Testing:** Validar toda la funcionalidad en BETA
+3. **Producción:** Cambiar a endpoints de producción con credenciales reales
 
 ## API Reference
 
@@ -293,6 +451,12 @@ isValidCE := sunatlib.IsValidCE("001234567")         // true
 - `NewRUCConsultationClient(decolectaAPIKey string) *ConsultationClient` - Solo RUC
 - `NewDNIConsultationClient() *ConsultationClient` - Solo DNI/CE (gratuito)
 
+**Constructores de Baja y Validación:** - **New!**
+- `NewVoidedDocumentsClient(ruc, username, password string) *SUNATClient` - Comunicaciones de baja (PRODUCCIÓN)
+- `NewVoidedDocumentsClientBeta(ruc, username, password string) *SUNATClient` - Comunicaciones de baja (BETA/Pruebas)
+- `NewDocumentValidationClient(ruc, username, password string) *DocumentValidationClient` - Validación de documentos (PRODUCCIÓN)
+- `NewDocumentValidationClientBeta(ruc, username, password string) *DocumentValidationClient` - Validación de documentos (BETA/Pruebas)
+
 **Configuración de certificados:**
 - `SetCertificate(privateKeyPath, certificatePath string) error`
 - `SetCertificateFromPFX(pfxPath, password, tempDir string) error`
@@ -301,6 +465,12 @@ isValidCE := sunatlib.IsValidCE("001234567")         // true
 - `SignXML(xmlContent []byte) ([]byte, error)`
 - `SendToSUNAT(signedXML []byte, documentType, seriesNumber string) (*SUNATResponse, error)`
 - `SignAndSendInvoice(xmlContent []byte, documentType, seriesNumber string) (*SUNATResponse, error)`
+
+**Comunicaciones de Baja:** - **New!**
+- `SendVoidedDocuments(request *VoidedDocumentsRequest) (*VoidedDocumentsResponse, error)`
+- `GetVoidedDocumentsStatus(ticket string) (*SUNATResponse, error)`
+- `GenerateVoidedDocumentsXML(request *VoidedDocumentsRequest) ([]byte, error)`
+- `GenerateVoidedDocumentsSeries(referenceDate time.Time, sequential int) string`
 
 ### ConsultationClient - **New!**
 
@@ -312,6 +482,35 @@ isValidCE := sunatlib.IsValidCE("001234567")         // true
 
 **Limpieza:**
 - `Cleanup() error`
+
+### DocumentValidationClient - **New!**
+
+**Métodos de validación:**
+- `ValidateDocument(req *ValidationRequest) (*ValidationResponse, error)` - Validación genérica
+- `ValidateInvoice(ruc, series, number, issueDate, totalAmount string) (*ValidationResponse, error)` - Validar factura
+- `ValidateReceipt(ruc, series, number, issueDate, totalAmount string) (*ValidationResponse, error)` - Validar boleta
+- `ValidateCreditNote(ruc, series, number, issueDate, totalAmount string) (*ValidationResponse, error)` - Validar nota de crédito
+- `ValidateDebitNote(ruc, series, number, issueDate, totalAmount string) (*ValidationResponse, error)` - Validar nota de débito
+- `CheckDocumentStatus(ruc, documentType, series, number string) (*ValidationResponse, error)` - Consulta básica de estado
+
+### VoidedDocumentsRequest - **New!**
+
+**Estructura para comunicaciones de baja:**
+- `RUC string` - RUC de la empresa
+- `CompanyName string` - Razón social de la empresa
+- `SeriesNumber string` - Número de serie de la comunicación (RA-YYYYMMDD-###)
+- `IssueDate time.Time` - Fecha de emisión de la comunicación
+- `ReferenceDate time.Time` - Fecha de referencia (fecha de los documentos a anular)
+- `Documents []VoidedDocument` - Lista de documentos a anular
+- `Description string` - Descripción de la comunicación
+
+### VoidedDocument - **New!**
+
+**Estructura para documentos a anular:**
+- `DocumentTypeCode string` - Código de tipo de documento (01=Factura, 03=Boleta, etc.)
+- `DocumentSeries string` - Serie del documento (F001, B001, etc.)
+- `DocumentNumber string` - Número correlativo del documento
+- `VoidedReason string` - Motivo de la anulación
 
 ### SUNATResponse
 
@@ -386,7 +585,10 @@ Ver la carpeta `examples/` para ejemplos completos:
 - `simple_example.go` - Uso básico de la librería
 - `advanced_example.go` - Manejo avanzado con validación de certificados
 - `flexible_usage.go` - Patrones avanzados de uso
-- `consultation_example.go` - **Nuevo!** Ejemplos de consulta RUC y DNI
+- `voided_documents_example.go` - **Nuevo!** Ejemplos de comunicaciones de baja
+- `document_validation_example.go` - **Nuevo!** Ejemplos de validación de documentos
+- `beta_testing_example.go` - **Nuevo!** Ejemplos de testing con endpoints BETA
+- `integrated_example.go` - **Nuevo!** Ejemplo completo integrando todas las funcionalidades
 
 ## Limitaciones
 

@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-09-18
+
+### Added
+- **NEW**: Voided Documents Communication (Comunicación de Baja)
+  - `SendVoidedDocuments()` method for document cancellation
+  - `GetVoidedDocumentsStatus()` method for checking cancellation status
+  - `GenerateVoidedDocumentsXML()` for XML generation
+  - Asynchronous processing with ticket system
+  - Support for multiple documents in single communication
+  - Automatic series generation (RA-YYYYMMDD-###)
+
+- **NEW**: Electronic Document Validation (Consulta de Validez)
+  - `ValidateInvoice()`, `ValidateReceipt()`, `ValidateCreditNote()`, `ValidateDebitNote()` methods
+  - Direct SOAP communication with SUNAT validation service
+  - Real-time document status verification
+  - Support for all electronic document types
+
+- **NEW**: Beta/Testing Environment Support
+  - `NewVoidedDocumentsClientBeta()` for testing voided documents
+  - `NewDocumentValidationClientBeta()` for testing document validation
+  - Production and Beta endpoints properly separated
+  - Test credentials support (MODDATOS/moddatos)
+  - Complete testing workflow examples
+
+- **NEW**: Enhanced Validation System
+  - RUC format validation with checksum verification
+  - Document series and number format validation
+  - Document type code validation
+  - Special character cleaning for XML safety
+  - Complete request validation before SUNAT communication
+
+### Architecture
+- **New Files Added**:
+  - `voided_documents.go` - Voided documents functionality
+  - `document_validation.go` - Document validation functionality
+  - `endpoints.go` - Endpoint management and environment selection
+  - `utils/validation.go` - Validation utilities
+
+### Technical Details
+- Voided documents use UBL VoidedDocuments-1 schema with ISO-8859-1 encoding
+- Document validation uses exact SOAP format as required by SUNAT
+- Beta endpoints: `https://e-beta.sunat.gob.pe/...`
+- Production endpoints: `https://e-factura.sunat.gob.pe/...`
+- Date format DD/MM/YYYY for document validation
+- CDATA support for company names and void reasons
+
+### Examples Added
+- `voided_documents_example.go` - Voided documents communication
+- `document_validation_example.go` - Document validation
+- `beta_testing_example.go` - Beta environment testing
+- `integrated_example.go` - Complete workflow integration
+
+### Breaking Changes
+- None - Fully backward compatible
+- All existing functionality unchanged
+
 ## [1.2.0] - 2025-09-09
 
 ### Added
