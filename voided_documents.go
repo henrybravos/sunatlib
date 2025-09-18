@@ -60,7 +60,7 @@ xmlns:sac="urn:sunat:names:specification:ubl:peru:schema:xsd:SunatAggregateCompo
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <ext:UBLExtensions><ext:UBLExtension>
 <ext:ExtensionContent>
-</ext:ExtensionContent>
+    </ext:ExtensionContent>
 </ext:UBLExtension></ext:UBLExtensions>
 <cbc:UBLVersionID>2.0</cbc:UBLVersionID>
 <cbc:CustomizationID>1.0</cbc:CustomizationID>
