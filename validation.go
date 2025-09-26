@@ -43,6 +43,9 @@ func (vc *ValidationClient) ValidateDocument(params *ValidationParams) (*Validat
 	// Build SOAP request
 	soapXML := vc.buildSOAPRequest(formattedParams)
 
+	// Log the request XML for debugging
+	fmt.Printf("📤 [SUNATLIB] Request XML being sent to SUNAT:\n%s\n", soapXML)
+
 	// Execute request
 	result, err := vc.executeValidationRequest(soapXML, formattedParams)
 	if err != nil {
