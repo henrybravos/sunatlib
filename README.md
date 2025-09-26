@@ -14,6 +14,7 @@ Una librería en Go para firmar documentos XML y enviarlos a SUNAT (Superintende
 - ✅ **Consulta DNI/CE usando servicio EsSalud (Gratuito - Nuevo)**
 - ✅ **Comunicación de Baja (Anulación de Documentos) - Nuevo**
 - ✅ **Consulta de Validez de Documentos Electrónicos - Nuevo**
+- ✅ **Validación de CPE con credenciales master SUNAT - Nuevo**
 
 ## Requisitos
 
@@ -466,6 +467,60 @@ debitNoteResp, _ := client.ValidateDebitNote("20123456789", "FD01", "000001", "1
 
 // Consulta básica de estado (sin fecha ni importe)
 statusResp, _ := client.CheckDocumentStatus("20123456789", "01", "F001", "000789")
+```
+
+## Validación CPE con Credenciales Master - **Nuevo!**
+
+### Validación usando credenciales master SUNAT
+
+```go
+// Crear cliente de validación con credenciales master
+validator := sunatlib.NewValidationClient(
+    masterRUC,      // Master RUC (parámetro)
+    masterUsername, // Master username (parámetro)
+    masterPassword, // Master password (parámetro)
+)
+
+// Validar factura
+invoiceResult, err := validator.ValidateInvoice(
+    "20123456789",     // RUC emisor
+    "F001",            // Serie
+    "00000001",        // Número
+    "2024-01-15",      // Fecha emisión (YYYY-MM-DD)
+    1250.50,           // Importe total
+)
+
+if err != nil {
+    log.Printf("Error: %v", err)
+} else {
+    fmt.Printf("Estado: %s\n", invoiceResult.State)         // VALIDO, NO_INFORMADO, ANULADO, RECHAZADO
+    fmt.Printf("Es válido: %t\n", invoiceResult.IsValid)    // true/false
+    fmt.Printf("Mensaje: %s\n", invoiceResult.StatusMessage)
+}
+
+// Validar boleta
+receiptResult, err := validator.ValidateReceipt(
+    "20123456789",     // RUC emisor
+    "B001",            // Serie
+    "00000001",        // Número
+    "2024-01-15",      // Fecha emisión (YYYY-MM-DD)
+    85.50,             // Importe total
+)
+
+// Validación personalizada con parámetros completos
+customParams := &sunatlib.ValidationParams{
+    IssuerRUC:           "20123456789",
+    DocumentType:        "01", // 01=Factura, 03=Boleta
+    SeriesNumber:        "F001",
+    DocumentNumber:      "00000002",
+    RecipientDocType:    "6", // 6=RUC, 1=DNI, 4=CE
+    RecipientDocNumber:  "20987654321",
+    IssueDate:           "2024-01-15", // YYYY-MM-DD
+    TotalAmount:         2500.75,
+    AuthorizationNumber: "", // Generalmente vacío
+}
+
+result, err := validator.ValidateDocument(customParams)
 ```
 
 ## Endpoints y Ambientes - **Nuevo!**
