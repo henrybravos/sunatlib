@@ -142,20 +142,27 @@ func (vc *ValidationClient) formatValidationParams(params *ValidationParams) (*f
 	}, nil
 }
 
-// formatDateForSUNAT converts YYYY-MM-DD to DD/MM/YYYY format
+// formatDateForSUNAT ensures date is in DD/MM/YYYY format for SUNAT validation
 func (vc *ValidationClient) formatDateForSUNAT(dateStr string) (string, error) {
 	if dateStr == "" {
 		return "", fmt.Errorf("date cannot be empty")
 	}
 
-	// Parse the date in YYYY-MM-DD format
-	parsedDate, err := time.Parse("2006-01-02", dateStr)
-	if err != nil {
-		return "", fmt.Errorf("cannot parse date '%s': %w", dateStr, err)
+	// If already in DD/MM/YYYY format, return as is
+	if len(dateStr) == 10 && dateStr[2] == '/' && dateStr[5] == '/' {
+		return dateStr, nil
 	}
 
-	// Format as DD/MM/YYYY
-	return parsedDate.Format("02/01/2006"), nil
+	// If in YYYY-MM-DD format, convert to DD/MM/YYYY
+	if len(dateStr) == 10 && dateStr[4] == '-' && dateStr[7] == '-' {
+		parsedDate, err := time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			return "", fmt.Errorf("cannot parse date '%s': %w", dateStr, err)
+		}
+		return parsedDate.Format("02/01/2006"), nil
+	}
+
+	return "", fmt.Errorf("unsupported date format: %s (expected DD/MM/YYYY or YYYY-MM-DD)", dateStr)
 }
 
 // buildSOAPRequest creates the SOAP XML request for validation
