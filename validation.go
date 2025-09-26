@@ -73,6 +73,7 @@ type ValidationResult struct {
 	StatusMessage string `json:"status_message"`
 	ErrorDetails  string `json:"error_details,omitempty"`
 	State         string `json:"state"` // VALIDO, NO_INFORMADO, ANULADO, RECHAZADO
+	ResponseXML   string `json:"response_xml,omitempty"` // Raw XML response from SUNAT
 }
 
 // formattedValidationParams holds formatted parameters for SUNAT request
@@ -223,6 +224,10 @@ func (vc *ValidationClient) executeValidationRequest(soapXML string, params *for
 
 	// Parse response
 	result := vc.parseValidationResponse(string(responseBody), resp.StatusCode)
+
+	// Store raw XML response for logging/debugging
+	result.ResponseXML = string(responseBody)
+
 	return result, nil
 }
 
