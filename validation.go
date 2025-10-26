@@ -175,7 +175,7 @@ func (vc *ValidationClient) buildSOAPRequest(params *formattedValidationParams) 
         <wsse:Security>
             <wsse:UsernameToken>
                 <wsse:Username>%s</wsse:Username>
-                <wsse:Password>%s</wsse:Password>
+                <wsse:Password><![CDATA[%s]]></wsse:Password>
             </wsse:UsernameToken>
         </wsse:Security>
     </soapenv:Header>
