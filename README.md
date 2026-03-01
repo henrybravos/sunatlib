@@ -10,7 +10,7 @@ Una librería en Go para firmar documentos XML y enviarlos a SUNAT (Superintende
 - ✅ Manejo automático de ZIP y codificación base64
 - ✅ Validación de certificados
 - ✅ Procesamiento de respuestas CDR (Constancia de Recepción)
-- ✅ **Consulta RUC usando API DeColecta (Pago - Nuevo)**
+- ✅ **Consulta RUC usando servicio directo SUNAT (Gratuito - Nuevo)**
 - ✅ **Consulta DNI/CE usando servicio EsSalud (Gratuito - Nuevo)**
 - ✅ **Comunicación de Baja (Anulación de Documentos) - Nuevo**
 - ✅ **Consulta de Validez de Documentos Electrónicos - Nuevo**
@@ -24,16 +24,19 @@ Una librería en Go para firmar documentos XML y enviarlos a SUNAT (Superintende
 ### Instalación de xmlsec1
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo apt-get install xmlsec1
 ```
 
 **MacOS:**
+
 ```bash
 brew install xmlsec1
 ```
 
 **RHEL/CentOS:**
+
 ```bash
 sudo yum install xmlsec1
 ```
@@ -48,6 +51,7 @@ go get github.com/henrybravos/sunatlib
 ## Uso Básico
 
 ### Opción 1: Proceso completo (todo en uno)
+
 ```go
 package main
 
@@ -97,11 +101,12 @@ func main() {
 ```
 
 ### Opción 2: Control separado (Recomendado)
+
 ```go
 func main() {
     client := sunatlib.NewSUNATClient("20123456789", "MODDATOS", "moddatos", endpoint)
     defer client.Cleanup()
-    
+
     err := client.SetCertificateFromPFX("certificate.pfx", "password", "/tmp/certs")
     if err != nil {
         log.Fatal(err)
@@ -173,6 +178,7 @@ sunatlib/
 ## Casos de Uso
 
 ### 🔧 Firma únicamente (sin envío a SUNAT)
+
 ```go
 client := sunatlib.NewSUNATClient("", "", "", "") // Sin credenciales SUNAT
 client.SetCertificateFromPFX("cert.pfx", "password", "/tmp")
@@ -182,13 +188,14 @@ signedXML, err := client.SignXML(xmlContent)
 ```
 
 ### 📦 Procesamiento por lotes
+
 ```go
 documents := []string{"inv1.xml", "inv2.xml", "inv3.xml"}
 
 for _, doc := range documents {
     xmlContent, _ := os.ReadFile(doc)
     signedXML, _ := client.SignXML(xmlContent)
-    
+
     // Decidir cuándo enviar a SUNAT
     if shouldSendNow(doc) {
         client.SendToSUNAT(signedXML, "01", getSeriesNumber(doc))
@@ -199,6 +206,7 @@ for _, doc := range documents {
 ```
 
 ### ⏰ Firmar ahora, enviar después
+
 ```go
 // Fase 1: Firmar durante horario de oficina
 signedXML, _ := client.SignXML(xmlContent)
@@ -215,11 +223,11 @@ response, _ := client.SendToSUNAT(signedXML, "01", "F001-00000001")
 
 ```go
 // Cliente independiente con ambos servicios (RUC + DNI)
-consultationClient := sunatlib.NewConsultationClient("your_decolecta_api_key")
+consultationClient := sunatlib.NewConsultationClient("")
 
 // O clientes específicos:
-rucClient := sunatlib.NewRUCConsultationClient("your_decolecta_api_key")  // Solo RUC
-dniClient := sunatlib.NewDNIConsultationClient()                          // Solo DNI/CE (gratuito)
+rucClient := sunatlib.NewRUCConsultationClient("")  // Solo RUC (Gratuito)
+dniClient := sunatlib.NewDNIConsultationClient()     // Solo DNI/CE (Gratuito)
 
 // Consulta básica de RUC
 rucResult, err := consultationClient.ConsultRUC("20601030013")
@@ -548,16 +556,19 @@ betaValidationClient := sunatlib.NewDocumentValidationClientBeta("20123456789", 
 ### Endpoints Disponibles
 
 **Producción:**
+
 - Facturación: `https://e-factura.sunat.gob.pe/ol-ti-itcpfegem/billService`
 - Validación: `https://e-factura.sunat.gob.pe/ol-it-wsconsvalidcpe/billValidService`
 
 **Beta/Pruebas:**
+
 - Facturación: `https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService`
 - Validación: `https://e-beta.sunat.gob.pe/ol-it-wsconsvalidcpe/billValidService`
 
 ### Credenciales de Prueba
 
 Para el ambiente BETA, usar las credenciales estándar de SUNAT:
+
 - **Usuario:** MODDATOS
 - **Contraseña:** moddatos
 
@@ -574,29 +585,35 @@ Para el ambiente BETA, usar las credenciales estándar de SUNAT:
 #### Métodos
 
 **Constructores:**
+
 - `NewSUNATClient(ruc, username, password, endpoint string) *SUNATClient` - Cliente de facturación electrónica
 
 **Constructores de Consulta:** - **New!**
-- `NewConsultationClient(decolectaAPIKey string) *ConsultationClient` - RUC + DNI/CE
-- `NewRUCConsultationClient(decolectaAPIKey string) *ConsultationClient` - Solo RUC
-- `NewDNIConsultationClient() *ConsultationClient` - Solo DNI/CE (gratuito)
+
+- `NewConsultationClient(apiKey string) *ConsultationClient` - RUC + DNI/CE (Gratuito)
+- `NewRUCConsultationClient(apiKey string) *ConsultationClient` - Solo RUC (Gratuito)
+- `NewDNIConsultationClient() *ConsultationClient` - Solo DNI/CE (Gratuito)
 
 **Constructores de Baja y Validación:** - **New!**
+
 - `NewVoidedDocumentsClient(ruc, username, password string) *SUNATClient` - Comunicaciones de baja (PRODUCCIÓN)
 - `NewVoidedDocumentsClientBeta(ruc, username, password string) *SUNATClient` - Comunicaciones de baja (BETA/Pruebas)
 - `NewDocumentValidationClient(ruc, username, password string) *DocumentValidationClient` - Validación de documentos (PRODUCCIÓN)
 - `NewDocumentValidationClientBeta(ruc, username, password string) *DocumentValidationClient` - Validación de documentos (BETA/Pruebas)
 
 **Configuración de certificados:**
+
 - `SetCertificate(privateKeyPath, certificatePath string) error`
 - `SetCertificateFromPFX(pfxPath, password, tempDir string) error`
 
 **Firma y envío a SUNAT:**
+
 - `SignXML(xmlContent []byte) ([]byte, error)`
 - `SendToSUNAT(signedXML []byte, documentType, seriesNumber string) (*SUNATResponse, error)`
 - `SignAndSendInvoice(xmlContent []byte, documentType, seriesNumber string) (*SUNATResponse, error)`
 
 **Comunicaciones de Baja:** - **New!**
+
 - `SendVoidedDocuments(request *VoidedDocumentsRequest) (*VoidedDocumentsResponse, error)`
 - `GetVoidedDocumentsStatus(ticket string) (*SUNATResponse, error)`
 - `QueryVoidedDocumentsTicket(ticket string) (*TicketStatusResponse, error)` - **Nuevo!**
@@ -608,17 +625,20 @@ Para el ambiente BETA, usar las credenciales estándar de SUNAT:
 ### ConsultationClient - **New!**
 
 **Métodos de consulta:**
+
 - `ConsultRUC(ruc string) (*RUCBasicResponse, error)` - Consulta básica RUC
 - `ConsultRUCFull(ruc string) (*RUCFullResponse, error)` - Consulta completa RUC
 - `ConsultDNI(dni string) (*DNIResponse, error)` - Consulta DNI
 - `ConsultCE(ce string) (*DNIResponse, error)` - Consulta CE
 
 **Limpieza:**
+
 - `Cleanup() error`
 
 ### DocumentValidationClient - **New!**
 
 **Métodos de validación:**
+
 - `ValidateDocument(req *ValidationRequest) (*ValidationResponse, error)` - Validación genérica
 - `ValidateInvoice(ruc, series, number, issueDate, totalAmount string) (*ValidationResponse, error)` - Validar factura
 - `ValidateReceipt(ruc, series, number, issueDate, totalAmount string) (*ValidationResponse, error)` - Validar boleta
@@ -629,6 +649,7 @@ Para el ambiente BETA, usar las credenciales estándar de SUNAT:
 ### VoidedDocumentsRequest - **New!**
 
 **Estructura para comunicaciones de baja:**
+
 - `RUC string` - RUC de la empresa
 - `CompanyName string` - Razón social de la empresa
 - `SeriesNumber string` - Número de serie de la comunicación (RA-YYYYMMDD-###)
@@ -640,6 +661,7 @@ Para el ambiente BETA, usar las credenciales estándar de SUNAT:
 ### VoidedDocument - **New!**
 
 **Estructura para documentos a anular:**
+
 - `DocumentTypeCode string` - Código de tipo de documento (01=Factura, 03=Boleta, etc.)
 - `DocumentSeries string` - Serie del documento (F001, B001, etc.)
 - `DocumentNumber string` - Número correlativo del documento
@@ -692,6 +714,7 @@ Para el ambiente BETA, usar las credenciales estándar de SUNAT:
 - `Message string` - Mensaje de respuesta
 
 **RUCBasicData campos:**
+
 - `RUC string` - Número de RUC
 - `RazonSocial string` - Razón social de la empresa
 - `Estado string` - Estado del contribuyente
@@ -700,6 +723,7 @@ Para el ambiente BETA, usar las credenciales estándar de SUNAT:
 - `Distrito string`, `Provincia string`, `Departamento string` - Ubicación
 
 **RUCFullData campos adicionales:**
+
 - `ActividadEconomica string` - Actividad económica principal
 - `NumeroTrabajadores string` - Número de trabajadores
 - `TipoFacturacion string` - Tipo de sistema de facturación
@@ -714,6 +738,7 @@ Para el ambiente BETA, usar las credenciales estándar de SUNAT:
 - `Message string` - Mensaje de respuesta
 
 **DNIData campos:**
+
 - `DNI string` - Número de documento
 - `NombreCompleto string` - Nombre completo
 - `Nombres string` - Nombres de la persona

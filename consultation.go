@@ -9,17 +9,19 @@ type ConsultationClient struct {
 }
 
 // NewConsultationClient creates a new consultation client with both services
-func NewConsultationClient(decolectaAPIKey string) *ConsultationClient {
+// apiKey is kept for backward compatibility but optional for RUC since it now uses direct SUNAT API
+func NewConsultationClient(apiKey string) *ConsultationClient {
 	return &ConsultationClient{
-		rucService: NewRUCService(decolectaAPIKey),
+		rucService: NewRUCService(apiKey),
 		dniService: NewDNIService(),
 	}
 }
 
 // NewRUCConsultationClient creates a client only for RUC consultation
-func NewRUCConsultationClient(decolectaAPIKey string) *ConsultationClient {
+// apiKey is kept for backward compatibility but optional since it now uses direct SUNAT API
+func NewRUCConsultationClient(apiKey string) *ConsultationClient {
 	return &ConsultationClient{
-		rucService: NewRUCService(decolectaAPIKey),
+		rucService: NewRUCService(apiKey),
 	}
 }
 
