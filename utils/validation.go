@@ -82,8 +82,9 @@ func ValidateDocumentSeries(series string) bool {
 		return false
 	}
 
-	// Common series patterns: F001, B001, FC01, etc.
-	re := regexp.MustCompile(`^[A-Z]{1,2}\d{2,3}$`)
+	// SUNAT series for electronic documents are 4 characters (e.g., F001, FUC1, B001)
+	// Some legacy series might be 3 characters.
+	re := regexp.MustCompile(`^[A-Z][A-Z0-9]{2,3}$`)
 	return re.MatchString(series)
 }
 
