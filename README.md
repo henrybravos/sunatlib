@@ -4,17 +4,19 @@ Una librería en Go para firmar documentos XML y enviarlos a SUNAT (Superintende
 
 ## Características
 
-- ✅ Firma digital XML compatible con SUNAT usando xmlsec1
+- ✅ **Firma digital XML robusta** (whitespace-agnostic) compatible con SUNAT usando xmlsec1
+- ✅ **Validación Estructural UBL** (Firewall local para errores 3105, 3024) - **Nuevo**
+- ✅ **Suite de Testing Beta** con templates "Golden Masters" - **Nuevo**
 - ✅ Soporte para certificados PKCS#12 (.pfx) y PEM
 - ✅ Comunicación SOAP con servicios web de SUNAT
 - ✅ Manejo automático de ZIP y codificación base64
 - ✅ Validación de certificados
 - ✅ Procesamiento de respuestas CDR (Constancia de Recepción)
-- ✅ **Consulta RUC usando servicio directo SUNAT (Gratuito - Nuevo)**
-- ✅ **Consulta DNI/CE usando servicio EsSalud (Gratuito - Nuevo)**
-- ✅ **Comunicación de Baja (Anulación de Documentos) - Nuevo**
-- ✅ **Consulta de Validez de Documentos Electrónicos - Nuevo**
-- ✅ **Validación de CPE con credenciales master SUNAT - Nuevo**
+- ✅ **Consulta RUC usando servicio directo SUNAT (Gratuito)**
+- ✅ **Consulta DNI/CE usando servicio EsSalud (Gratuito)**
+- ✅ **Comunicación de Baja (Anulación de Documentos)**
+- ✅ **Consulta de Validez de Documentos Electrónicos**
+- ✅ **Validación de CPE con credenciales master SUNAT**
 
 ## Requisitos
 
@@ -43,10 +45,34 @@ sudo yum install xmlsec1
 
 ## Instalación
 
-```bash
-go mod init your-project
-go get github.com/henrybravos/sunatlib
+## Validación Estructural (UBLValidator)
+
+Antes de firmar y enviar un documento, es recomendable pasarlo por el `UBLValidator`. Esto actúa como un "firewall" local que detecta errores estructurales comunes que SUNAT rechazaría (como el error 3105 o el 3024).
+
+```go
+v := sunatlib.NewUBLValidator()
+err := v.Validate(xmlContent)
+if err != nil {
+    fmt.Printf("❌ Error estructural: %v\n", err)
+    return
+}
 ```
+
+Este validador verifica:
+- Presencia de tags obligatorios (`cbc:UBLVersionID`, `cac:TaxTotal`, etc.).
+- Consistencia de códigos de tributos (Catálogo 05).
+- Reglas de no repetición de totales de impuestos.
+
+## Testing en Ambiente Beta
+
+La librería incluye una herramienta de integración (`cmd/sendbeta`) y una suite de archivos maestros (`testdata/`) para realizar pruebas de regresión contra el gateway oficial de SUNAT.
+
+Para ejecutar la suite de pruebas:
+```bash
+go run ./cmd/sendbeta/
+```
+
+Esto procesará automáticamente 7 escenarios impositivos (Grabado, Exonerado, Inafecto, Exportación, Mixto, ISC+IGV y Retiro), firmándolos con tu certificado de prueba y reportando la respuesta de SUNAT.
 
 ## Uso Básico
 

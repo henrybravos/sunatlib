@@ -112,17 +112,33 @@ func (s *XMLSigner) createSignatureTemplate(xmlContent []byte) ([]byte, error) {
 		xmlStr = strings.Replace(xmlStr, "<Invoice ", `<Invoice xmlns:ds="http://www.w3.org/2000/09/xmldsig#" `, 1)
 	}
 
-	// Find empty ExtensionContent and inject signature
-	if strings.Contains(xmlStr, "<ext:ExtensionContent>\n    </ext:ExtensionContent>") {
-		xmlStr = strings.Replace(xmlStr, "<ext:ExtensionContent>\n    </ext:ExtensionContent>",
-			"<ext:ExtensionContent>\n"+signatureTemplate+"\n    </ext:ExtensionContent>", 1)
-	} else if strings.Contains(xmlStr, "<ext:ExtensionContent></ext:ExtensionContent>") {
-		xmlStr = strings.Replace(xmlStr, "<ext:ExtensionContent></ext:ExtensionContent>",
-			"<ext:ExtensionContent>\n"+signatureTemplate+"\n    </ext:ExtensionContent>", 1)
-	} else if strings.Contains(xmlStr, "<ext:ExtensionContent/>") {
-		xmlStr = strings.Replace(xmlStr, "<ext:ExtensionContent/>",
-			"<ext:ExtensionContent>\n"+signatureTemplate+"\n    </ext:ExtensionContent>", 1)
-	} else {
+	// Find ExtensionContent (empty or whitespace-only) and inject signature.
+	// Use a simple approach that handles any whitespace between the tags.
+	startTag := "<ext:ExtensionContent>"
+	endTag := "</ext:ExtensionContent>"
+	selfClose := "<ext:ExtensionContent/>"
+
+	switch {
+	case strings.Contains(xmlStr, selfClose):
+		xmlStr = strings.Replace(xmlStr, selfClose,
+			startTag+"\n"+signatureTemplate+"\n    "+endTag, 1)
+
+	case strings.Contains(xmlStr, startTag):
+		start := strings.Index(xmlStr, startTag)
+		end := strings.Index(xmlStr[start:], endTag)
+		if end == -1 {
+			return nil, fmt.Errorf("malformed XML: <ext:ExtensionContent> without closing tag")
+		}
+		end += start
+		// Check the content between tags is only whitespace
+		between := xmlStr[start+len(startTag) : end]
+		if strings.TrimSpace(between) != "" {
+			return nil, fmt.Errorf("ExtensionContent already has content: %q", strings.TrimSpace(between))
+		}
+		replacement := startTag + "\n" + signatureTemplate + "\n    " + endTag
+		xmlStr = xmlStr[:start] + replacement + xmlStr[end+len(endTag):]
+
+	default:
 		return nil, fmt.Errorf("no suitable ExtensionContent found for signature injection")
 	}
 

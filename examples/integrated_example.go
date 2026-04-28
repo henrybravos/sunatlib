@@ -12,8 +12,36 @@ func main() {
 	fmt.Println("=== SUNAT Integrated Example: Document Validation + Voided Documents ===")
 
 	// Example workflow:
+	// 0. Perform structural validation on the XML
 	// 1. Validate some existing documents
 	// 2. If needed, void some documents using communication de baja
+
+	// Step 0: Structural UBL Validation
+	fmt.Println("\n📋 Step 0: Performing Structural UBL Validation")
+
+	// XML content to validate (could be from a file or generated)
+	xmlToValidate := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2">
+	<cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+	<cbc:ID>F001-1</cbc:ID>
+	<cac:InvoiceLine>
+		<cbc:ID>1</cbc:ID>
+		<cac:TaxTotal>
+			<cac:TaxSubtotal>
+				<cac:TaxCategory>
+					<cac:TaxScheme><cbc:ID>1000</cbc:ID></cac:TaxScheme>
+				</cac:TaxCategory>
+			</cac:TaxSubtotal>
+		</cac:TaxTotal>
+	</cac:InvoiceLine>
+</Invoice>`)
+
+	validator := sunatlib.NewUBLValidator()
+	if err := validator.Validate(xmlToValidate); err != nil {
+		fmt.Printf("❌ Structural validation failed: %v\n", err)
+	} else {
+		fmt.Println("✅ Structural validation passed (Firewall OK)")
+	}
 
 	// Step 1: Document Validation
 	fmt.Println("\n📋 Step 1: Validating existing documents")
@@ -47,7 +75,7 @@ func main() {
 	// Step 2: Void Documents Communication
 	fmt.Println("\n📋 Step 2: Creating voided documents communication")
 
-	voidedClient := sunatlib.NewVoidedDocumentsClient(
+	voidedClient := sunatlib.NewSUNATClient(
 		"20123456789",  // RUC
 		"MODDATOS",     // SOL username
 		"moddatos",     // SOL password

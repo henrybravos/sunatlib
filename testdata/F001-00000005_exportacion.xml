@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- CASO 5: Exportación (tipAfeIgv=40) → TaxScheme 9995 (EXP) -->
+<!-- ProfileID=0200, InvoiceTypeCode listID="0200" -->
+<!-- TaxAmount=0 porque exportación está gravada al 0% de IGV -->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+  xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+  xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+  xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+  xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2">
+  <ext:UBLExtensions>
+    <ext:UBLExtension>
+      <ext:ExtensionContent>
+      </ext:ExtensionContent>
+    </ext:UBLExtension>
+  </ext:UBLExtensions>
+  <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+  <cbc:CustomizationID schemeAgencyName="PE:SUNAT">2.0</cbc:CustomizationID>
+  <!-- 0200 = Exportación de bienes (Catálogo 51) -->
+  <cbc:ProfileID schemeName="Tipo de Operacion" schemeAgencyName="PE:SUNAT"
+    schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo51">0200</cbc:ProfileID>
+  <cbc:ID>F001-00000005</cbc:ID>
+  <cbc:IssueDate>2026-04-27</cbc:IssueDate>
+  <cbc:IssueTime>00:00:00</cbc:IssueTime>
+  <!-- listID debe coincidir con ProfileID para exportación -->
+  <cbc:InvoiceTypeCode listID="0200" listAgencyName="PE:SUNAT"
+    listName="Tipo de Documento"
+    listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo01">01</cbc:InvoiceTypeCode>
+  <cbc:Note languageLocaleID="1000"><![CDATA[CIEN CON 00/100 DOLARES AMERICANOS]]></cbc:Note>
+  <!-- Exportaciones generalmente en USD -->
+  <cbc:DocumentCurrencyCode listID="ISO 4217 Alpha" listName="Currency"
+    listAgencyName="United Nations Economic Commission for Europe">USD</cbc:DocumentCurrencyCode>
+  <cbc:LineCountNumeric>1</cbc:LineCountNumeric>
+  <cac:Signature>
+    <cbc:ID>F001-00000005</cbc:ID>
+    <cac:SignatoryParty>
+      <cac:PartyIdentification><cbc:ID>20000000001</cbc:ID></cac:PartyIdentification>
+      <cac:PartyName><cbc:Name><![CDATA[EMPRESA TEST SAC]]></cbc:Name></cac:PartyName>
+    </cac:SignatoryParty>
+    <cac:DigitalSignatureAttachment>
+      <cac:ExternalReference><cbc:URI>#F001-00000005</cbc:URI></cac:ExternalReference>
+    </cac:DigitalSignatureAttachment>
+  </cac:Signature>
+  <cac:AccountingSupplierParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeID="6" schemeAgencyName="PE:SUNAT"
+          schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06">20000000001</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName><![CDATA[EMPRESA TEST SAC]]></cbc:RegistrationName>
+        <cbc:CompanyID schemeID="6" schemeAgencyName="PE:SUNAT"
+          schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06">20000000001</cbc:CompanyID>
+        <cac:TaxScheme><cbc:ID>20000000001</cbc:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName><![CDATA[EMPRESA TEST SAC]]></cbc:RegistrationName>
+        <cac:RegistrationAddress>
+          <cbc:ID schemeName="Ubigeos" schemeAgencyName="PE:INEI">150101</cbc:ID>
+          <cbc:AddressTypeCode listAgencyName="PE:SUNAT" listName="Establecimientos anexos">0000</cbc:AddressTypeCode>
+          <cbc:CityName><![CDATA[LIMA]]></cbc:CityName>
+          <cbc:CountrySubentity><![CDATA[LIMA]]></cbc:CountrySubentity>
+          <cbc:District><![CDATA[LIMA]]></cbc:District>
+          <cac:AddressLine><cbc:Line><![CDATA[AV. TEST 123]]></cbc:Line></cac:AddressLine>
+          <cac:Country><cbc:IdentificationCode listID="ISO 3166-1"
+            listAgencyName="United Nations Economic Commission for Europe"
+            listName="Country">PE</cbc:IdentificationCode></cac:Country>
+        </cac:RegistrationAddress>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingSupplierParty>
+  <!-- Para exportaciones el receptor es un no-domiciliado -->
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <!-- schemeID="0" para documento no especificado (cliente extranjero sin doc peruano) -->
+        <cbc:ID schemeID="0" schemeName="Documento de Identidad"
+          schemeAgencyName="PE:SUNAT"
+          schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06">-</cbc:ID>
+      </cac:PartyIdentification>
+      <cac:PartyTaxScheme>
+        <cbc:RegistrationName><![CDATA[FOREIGN CUSTOMER LLC]]></cbc:RegistrationName>
+        <cbc:CompanyID schemeID="0" schemeAgencyName="PE:SUNAT"
+          schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06">-</cbc:CompanyID>
+        <cac:TaxScheme><cbc:ID>-</cbc:ID></cac:TaxScheme>
+      </cac:PartyTaxScheme>
+      <cac:PartyLegalEntity>
+        <cbc:RegistrationName><![CDATA[FOREIGN CUSTOMER LLC]]></cbc:RegistrationName>
+      </cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
+  <cac:PaymentTerms>
+    <cbc:ID>FormaPago</cbc:ID>
+    <cbc:PaymentMeansID>Contado</cbc:PaymentMeansID>
+  </cac:PaymentTerms>
+  <!-- Exportación: TaxAmount=0, TaxScheme=9995 (EXP) -->
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="USD">0.00</cbc:TaxAmount>
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="USD">100.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="USD">0.00</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier"
+          schemeAgencyName="United Nations Economic Commission for Europe">G</cbc:ID>
+        <cac:TaxScheme>
+          <cbc:ID schemeID="UN/ECE 5153" schemeName="Codigo de tributos" schemeAgencyName="PE:SUNAT">9995</cbc:ID>
+          <cbc:Name>EXP</cbc:Name>
+          <cbc:TaxTypeCode>FRE</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:LegalMonetaryTotal>
+    <cbc:LineExtensionAmount currencyID="USD">100.00</cbc:LineExtensionAmount>
+    <cbc:TaxInclusiveAmount currencyID="USD">100.00</cbc:TaxInclusiveAmount>
+    <cbc:AllowanceTotalAmount currencyID="USD">0.00</cbc:AllowanceTotalAmount>
+    <cbc:ChargeTotalAmount currencyID="USD">0.00</cbc:ChargeTotalAmount>
+    <cbc:PayableAmount currencyID="USD">100.00</cbc:PayableAmount>
+  </cac:LegalMonetaryTotal>
+  <cac:InvoiceLine>
+    <cbc:ID>1</cbc:ID>
+    <cbc:InvoicedQuantity unitCode="NIU" unitCodeListID="UN/ECE rec 20"
+      unitCodeListAgencyName="United Nations Economic Commission for Europe">1.00</cbc:InvoicedQuantity>
+    <cbc:LineExtensionAmount currencyID="USD">100.00</cbc:LineExtensionAmount>
+    <cac:PricingReference>
+      <cac:AlternativeConditionPrice>
+        <cbc:PriceAmount currencyID="USD">100.00</cbc:PriceAmount>
+        <cbc:PriceTypeCode listName="Tipo de Precio" listAgencyName="PE:SUNAT"
+          listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo16">01</cbc:PriceTypeCode>
+      </cac:AlternativeConditionPrice>
+    </cac:PricingReference>
+    <!-- tipAfeIgv=40 (Exportación) → TaxScheme=9995 (EXP) -->
+    <cac:TaxTotal>
+      <cbc:TaxAmount currencyID="USD">0.00</cbc:TaxAmount>
+      <cac:TaxSubtotal>
+        <cbc:TaxableAmount currencyID="USD">100.00</cbc:TaxableAmount>
+        <cbc:TaxAmount currencyID="USD">0.00</cbc:TaxAmount>
+        <cac:TaxCategory>
+          <cbc:ID schemeID="UN/ECE 5305" schemeName="Tax Category Identifier"
+            schemeAgencyName="United Nations Economic Commission for Europe">G</cbc:ID>
+          <cbc:Percent>0.00</cbc:Percent>
+          <cbc:TaxExemptionReasonCode listAgencyName="PE:SUNAT" listName="Afectacion del IGV"
+            listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07">40</cbc:TaxExemptionReasonCode>
+          <cac:TaxScheme>
+            <cbc:ID schemeID="UN/ECE 5153" schemeName="Codigo de tributos" schemeAgencyName="PE:SUNAT">9995</cbc:ID>
+            <cbc:Name>EXP</cbc:Name>
+            <cbc:TaxTypeCode>FRE</cbc:TaxTypeCode>
+          </cac:TaxScheme>
+        </cac:TaxCategory>
+      </cac:TaxSubtotal>
+    </cac:TaxTotal>
+    <cac:Item>
+      <cbc:Description><![CDATA[PRODUCTO DE EXPORTACION]]></cbc:Description>
+      <cac:SellersItemIdentification><cbc:ID><![CDATA[PRD004]]></cbc:ID></cac:SellersItemIdentification>
+    </cac:Item>
+    <cac:Price>
+      <cbc:PriceAmount currencyID="USD">100.00</cbc:PriceAmount>
+    </cac:Price>
+  </cac:InvoiceLine>
+</Invoice>

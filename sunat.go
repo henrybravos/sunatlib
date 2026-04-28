@@ -22,15 +22,17 @@ type SUNATClient struct {
 	Password string
 	Endpoint string
 	signer   *signer.XMLSigner
+	validator *UBLValidator
 }
 
 // NewSUNATClient creates a new SUNAT client for electronic billing
 func NewSUNATClient(ruc, username, password, endpoint string) *SUNATClient {
 	return &SUNATClient{
-		RUC:      ruc,
-		Username: username,
-		Password: password,
-		Endpoint: endpoint,
+		RUC:       ruc,
+		Username:  username,
+		Password:  password,
+		Endpoint:  endpoint,
+		validator: NewUBLValidator(),
 	}
 }
 
@@ -64,6 +66,11 @@ func (c *SUNATClient) SignXML(xmlContent []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	// Robust Structural Validation: Error 3105 prevention and more
+	if err := c.validator.Validate(xmlContent); err != nil {
+		return nil, err
+	}
+
 	// Sign the XML
 	signedXML, err := c.signer.SignXML(xmlContent)
 	if err != nil {
@@ -71,6 +78,11 @@ func (c *SUNATClient) SignXML(xmlContent []byte) ([]byte, error) {
 	}
 
 	return signedXML, nil
+}
+
+// ValidateUBL performs structural validation on a UBL XML document
+func (c *SUNATClient) ValidateUBL(xmlContent []byte) error {
+	return c.validator.Validate(xmlContent)
 }
 
 // SendToSUNAT sends a signed XML document to SUNAT

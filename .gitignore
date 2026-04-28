@@ -42,10 +42,13 @@ Thumbs.db
 *.crt
 *.cer
 
-# Test files with real data
+# Test binaries
+*.test
+
+# Sensitive patterns (keep ignoring these)
 *_real*
-*_test*
 *_private*
+*_secret*
 
 # CDR responses
 cdr_*.zip
@@ -53,3 +56,9 @@ cdr_*.zip
 
 # Log files
 *.log
+
+# Environment / credenciales — NUNCA commitear
+.env
+.env.local
+.env.*.local
+/sendbeta

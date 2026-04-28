@@ -5,7 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.0] - 2026-04-28
+
+### Added
+- **NEW: Structural UBL Validator (`UBLValidator`)**
+  - Implementación de un firewall estructural previo a la firma.
+  - Validación de códigos de tributos (Catálogo 05) y tipos de afectación (Catálogo 07).
+  - Bloqueo de documentos con múltiples bloques `cac:TaxTotal` a nivel de totales (Error 3024).
+  - Detección proactiva de tags obligatorios faltantes (Error 3105).
+
+- **NEW: Beta Integration Suite (`cmd/sendbeta`)**
+  - Herramienta CLI para pruebas de regresión contra el gateway Beta oficial de SUNAT.
+  - Sustitución automática de RUC en XML para alineación con certificados de prueba.
+  - Manejo de retardos (Rate Limiting) para evitar bloqueos 401/403 en el entorno Beta.
+  - Suite de "Golden Masters" en `testdata/` cubriendo los principales casos impositivos.
+
+- **NEW: Regression Testing Framework**
+  - `testdata_test.go` para validación automática de todos los templates XML maestros.
+
+### Improved
+- **Robust XML Signing Pipeline**
+  - Refactorización de `XMLSigner` para ser agnóstico a espacios en blanco (whitespace-agnostic).
+  - Inyección de firmas en `ext:ExtensionContent` mediante búsqueda de tags flexibilizada, resolviendo regresiones en templates con diferentes niveles de indentación.
+  - Corrección de la base imponible del IGV en operaciones con ISC (Caso 07) para cumplimiento estricto de reglas de suma SUNAT (Error 3277).
+
+### Fixed
+- **Signature Injection Bug**: Corregido fallo que impedía firmar XMLs generados con indentación distinta a 4 espacios.
+- **ISC/IGV Consistency**: Ajustada la lógica de cálculo en el template maestro para que la sumatoria de valores de venta coincida con la base imponible del IGV.
+
+### Verified Scenarios (SUNAT Beta)
+- ✅ Grabado Oneroso
+- ✅ Exonerado
+- ✅ Inafecto
+- ✅ Exportación
+- ✅ Mixto (Gravado + Exonerado + Inafecto)
+- ✅ ISC + IGV (Base imponible corregida)
+- 🔲 Retiro/Bonificación (Pendiente ajuste fino de base imponible)
 
 ## [1.4.0] - 2025-01-18
 
