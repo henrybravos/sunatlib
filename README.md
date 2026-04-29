@@ -4,9 +4,9 @@ Una librería en Go para firmar documentos XML y enviarlos a SUNAT (Superintende
 
 ## Características
 
-- ✅ **Firma digital XML robusta** (whitespace-agnostic) compatible con SUNAT usando xmlsec1
-- ✅ **Validación Estructural UBL** (Firewall local para errores 3105, 3024) - **Nuevo**
-- ✅ **Suite de Testing Beta** con templates "Golden Masters" - **Nuevo**
+- ✅ **Guía de Remisión Electrónica (GRE)** - Soporte completo para API REST/OAuth 2.0 (Envío + Consulta) - **Nuevo**
+- ✅ **Sandbox de Terceros** - Integración con NubeFact para validación de GRE sin tocar producción - **Nuevo**
+- ✅ **Firma Digital XML robusta** (whitespace-agnostic) compatible con SUNAT usando xmlsec1
 - ✅ Soporte para certificados PKCS#12 (.pfx) y PEM
 - ✅ Comunicación SOAP con servicios web de SUNAT
 - ✅ Manejo automático de ZIP y codificación base64
@@ -453,6 +453,77 @@ if err == nil {
 }
 ```
 
+## Guía de Remisión Electrónica (GRE) - **Nuevo!**
+
+### Emisión usando API REST y OAuth 2.0
+
+La nueva plataforma de SUNAT para Guías de Remisión utiliza un flujo asíncrono vía REST y autenticación OAuth 2.0.
+
+```go
+import (
+    "github.com/henrybravos/sunatlib/gre"
+    "github.com/henrybravos/sunatlib"
+)
+
+func main() {
+    // 1. Configurar cliente GRE
+    client := &gre.GreClient{
+        ClientID:     "tu-client-id",
+        ClientSecret: "tu-client-secret",
+        TokenURL:     sunatlib.SUNAT_GRE_TOKEN_URL,
+        ApiURL:       sunatlib.SUNAT_GRE_API_URL,
+    }
+
+    // 2. Obtener token OAuth
+    token, err := client.GetToken(context.Background())
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // 3. Generar XML UBL 2.1
+    guide := &gre.DespatchAdvice{
+        ID: "T001-1",
+        // ... completar campos según modelos en gre/models.go
+    }
+    xmlContent, _ := gre.GenerateXML(guide)
+
+    // 4. Firmar XML (usando el cliente base)
+    sunatClient := sunatlib.NewSUNATClient(...)
+    signedXML, _ := sunatClient.SignXML(xmlContent)
+
+    // 5. Enviar ZIP a SUNAT (Devuelve un Ticket)
+    zipContent, _ := utils.CreateZip("20612345678-09-T001-1.xml", signedXML)
+    resp, err := client.SendGuide(context.Background(), "20612345678-09-T001-1", zipContent)
+    
+    if err == nil {
+        fmt.Printf("✅ Guía enviada. Ticket: %s\n", resp.NumTicket)
+        
+        // 6. Consultar estado del ticket (Polling)
+        // SUNAT puede tardar unos segundos en procesar
+        time.Sleep(2 * time.Second)
+        status, err := client.GetStatus(context.Background(), resp.NumTicket)
+        if err == nil {
+            fmt.Printf("📄 Estado: %s\n", status.CodRespuesta)
+            if status.ArcCdr != "" {
+                fmt.Println("📩 CDR Recibido y listo para procesar.")
+            }
+        }
+    }
+}
+```
+
+### Uso de NubeFact Sandbox (Recomendado para Pruebas)
+
+Debido a que el entorno Beta de SUNAT suele ser inestable, la librería soporta el Sandbox de NubeFact:
+
+```go
+client := &gre.GreClient{
+    ClientID:     sunatlib.NubeFactGREToken,
+    ApiURL:       sunatlib.NubeFactGREApi,
+    // ... credenciales de NubeFact
+}
+```
+
 ## Consulta de Validez de Documentos Electrónicos - **Nuevo!**
 
 ### Validación de Documentos con SOAP SUNAT
@@ -814,6 +885,16 @@ Las contribuciones son bienvenidas. Por favor:
 3. Commit de cambios
 4. Push a la rama
 5. Crear Pull Request
+
+## Changelog
+
+### [v1.7.0] - 2026-04-29
+- **GRE REST API**: Soporte completo para el nuevo gateway de Guías de Remisión de SUNAT.
+- **OAuth 2.0**: Implementación de flujo de autenticación `password` grant para APIs de SUNAT.
+- **Asincronía**: Nuevos métodos `SendGuide` y `GetStatus` para manejo de tickets y CDRs.
+- **Sandbox NubeFact**: Integración nativa con el servidor de pruebas de NubeFact para validación de XMLs.
+- **Robustez**: Fallback automático de certificados PFX a PEM para mejorar la compatibilidad en entornos Linux/Go.
+- **TDD**: Cobertura de tests incrementada para el cliente GRE.
 
 ## Licencia
 

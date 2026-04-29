@@ -89,6 +89,45 @@ func TestUBLValidator_Validate(t *testing.T) {
 </Invoice>`,
 			wantErr: false,
 		},
+		{
+			name: "Valid DespatchAdvice",
+			xml: `<?xml version="1.0" encoding="UTF-8"?>
+<DespatchAdvice xmlns="urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2">
+	<cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+	<cbc:CustomizationID>2.0</cbc:CustomizationID>
+	<cbc:ID>T001-1</cbc:ID>
+	<cac:DespatchLine>
+		<cbc:ID>1</cbc:ID>
+		<cbc:DeliveredQuantity unitCode="NIU">10</cbc:DeliveredQuantity>
+		<cac:Item>
+			<cbc:Description>Item Test</cbc:Description>
+		</cac:Item>
+	</cac:DespatchLine>
+</DespatchAdvice>`,
+			wantErr: false,
+		},
+		{
+			name: "DespatchAdvice Invalid UBLVersion",
+			xml: `<?xml version="1.0" encoding="UTF-8"?>
+<DespatchAdvice xmlns="urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2">
+	<cbc:UBLVersionID>2.0</cbc:UBLVersionID>
+	<cbc:CustomizationID>2.0</cbc:CustomizationID>
+	<cbc:ID>T001-1</cbc:ID>
+</DespatchAdvice>`,
+			wantErr: true,
+			msg:     "UBL error: GRE must use UBLVersionID 2.1",
+		},
+		{
+			name: "DespatchAdvice Invalid CustomizationID",
+			xml: `<?xml version="1.0" encoding="UTF-8"?>
+<DespatchAdvice xmlns="urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2">
+	<cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+	<cbc:CustomizationID>1.0</cbc:CustomizationID>
+	<cbc:ID>T001-1</cbc:ID>
+</DespatchAdvice>`,
+			wantErr: true,
+			msg:     "UBL error: GRE must use CustomizationID 2.0",
+		},
 	}
 
 	for _, tt := range tests {

@@ -25,6 +25,13 @@ type MinimalUBL struct {
 	InvoiceLines    []InvoiceLine `xml:"InvoiceLine"`
 	CreditNoteLines []InvoiceLine `xml:"CreditNoteLine"`
 	DebitNoteLines  []InvoiceLine `xml:"DebitNoteLine"`
+	DespatchLines   []DespatchLine `xml:"DespatchLine"`
+}
+
+// DespatchLine represents a line in a Referral Guide
+type DespatchLine struct {
+	ID                string  `xml:"ID"`
+	DeliveredQuantity float64 `xml:"DeliveredQuantity"`
 }
 
 // InvoiceLine represents a line in a UBL document (shared between Invoice, CN, DN)
@@ -103,6 +110,16 @@ func (v *UBLValidator) validateHeader(ubl *MinimalUBL) error {
 		return fmt.Errorf("UBL error: missing UBLVersionID")
 	}
 
+	rootName := strings.ToLower(ubl.XMLName.Local)
+	if rootName == "despatchadvice" {
+		if ubl.UBLVersionID != "2.1" {
+			return fmt.Errorf("UBL error: GRE must use UBLVersionID 2.1")
+		}
+		if ubl.CustomizationID != "2.0" {
+			return fmt.Errorf("UBL error: GRE must use CustomizationID 2.0")
+		}
+	}
+
 	return nil
 }
 
@@ -115,9 +132,14 @@ func (v *UBLValidator) validateLines(ubl *MinimalUBL) error {
 		lines = ubl.DebitNoteLines
 	}
 
-	// Only validate lines for Invoices, Credit Notes and Debit Notes
-	// Voided documents have different structure handled elsewhere or skipped here
 	rootName := strings.ToLower(ubl.XMLName.Local)
+	if rootName == "despatchadvice" {
+		if len(ubl.DespatchLines) == 0 {
+			return fmt.Errorf("UBL error: document must have at least one line")
+		}
+		return nil
+	}
+
 	if rootName != "invoice" && rootName != "creditnote" && rootName != "debitnote" {
 		return nil
 	}

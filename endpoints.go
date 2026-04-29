@@ -1,6 +1,8 @@
 // Package sunatlib defines SUNAT service endpoints
 package sunatlib
 
+import "fmt"
+
 // SUNAT Production Endpoints
 const (
 	// Production endpoints for electronic invoicing
@@ -10,6 +12,10 @@ const (
 
 	// Production endpoint for document validation
 	SUNATProductionValidationService = "https://e-factura.sunat.gob.pe/ol-it-wsconsvalidcpe/billValidService"
+
+	// New GRE REST and OAuth Endpoints
+	SUNATProductionGREToken = "https://api-seguridad.sunat.gob.pe/v1/clientessol/%s/oauth2/token"
+	SUNATProductionGREApi   = "https://api-cpe.sunat.gob.pe/v1/contribuyente/gem/comprobantes"
 )
 
 // SUNAT Beta/Testing Endpoints
@@ -21,6 +27,16 @@ const (
 
 	// Beta endpoint for document validation (testing)
 	SUNATBetaValidationService = "https://e-beta.sunat.gob.pe/ol-it-wsconsvalidcpe/billValidService"
+
+	// Beta GRE REST and OAuth Endpoints
+	// NOTE: api-cpe-beta.sunat.gob.pe often has DNS resolution issues.
+	// Workaround: Add "161.132.21.169 api-cpe-beta.sunat.gob.pe" to your /etc/hosts file.
+	SUNATBetaGREToken = "https://api-seguridad.sunat.gob.pe/v1/clientessol/%s/oauth2/token"
+	SUNATBetaGREApi   = "https://api-cpe-beta.sunat.gob.pe/v1/contribuyente/gem/comprobantes"
+
+	// NubeFact GRE Sandbox Endpoints (Alternative for testing)
+	NubeFactGREToken = "https://gre-test.nubefact.com/v1/clientessol/%s/oauth2/token"
+	NubeFactGREApi   = "https://gre-test.nubefact.com/v1/contribuyente/gem/comprobantes"
 )
 
 // Environment types
@@ -69,4 +85,21 @@ func GetGuideServiceEndpoint(env Environment) string {
 	default:
 		return SUNATProductionGuideService
 	}
+}
+
+// GetGRETokenEndpoint returns the appropriate GRE OAuth token endpoint based on environment
+func GetGRETokenEndpoint(env Environment, clientID string) string {
+	endpoint := SUNATProductionGREToken
+	if env == Beta {
+		endpoint = SUNATBetaGREToken
+	}
+	return fmt.Sprintf(endpoint, clientID)
+}
+
+// GetGREApiEndpoint returns the appropriate GRE REST API endpoint based on environment
+func GetGREApiEndpoint(env Environment) string {
+	if env == Beta {
+		return SUNATBetaGREApi
+	}
+	return SUNATProductionGREApi
 }
