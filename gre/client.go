@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -124,7 +125,9 @@ func (c *GreClient) GetStatus(ctx context.Context, ticket string) (*GreStatusRes
 		return nil, fmt.Errorf("missing access token")
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", c.ApiURL+"/"+ticket, nil)
+	url := c.ApiURL + "/envios/" + ticket
+	log.Printf("🌐 [SUNATLIB] Polling GRE status: %s", url)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}

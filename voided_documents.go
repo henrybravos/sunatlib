@@ -50,7 +50,7 @@ func (c *SUNATClient) GenerateVoidedDocumentsXML(request *VoidedDocumentsRequest
 	}
 
 	// Generate XML content based on SUNAT VoidedDocuments schema (following PHP example format)
-	xmlContent := fmt.Sprintf(`<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+	xmlContent := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <VoidedDocuments xmlns="urn:sunat:names:specification:ubl:peru:schema:xsd:VoidedDocuments-1"
 xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
 xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
