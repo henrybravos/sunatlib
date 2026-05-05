@@ -246,7 +246,7 @@ func (c *SUNATClient) parseVoidedDocumentsResponse(responseData []byte) (*Voided
 	}
 
 	// Check for successful response - sendSummary returns a ticket
-	if strings.Contains(responseStr, "<br:sendSummaryResponse") {
+	if strings.Contains(responseStr, "sendSummaryResponse") {
 		response.Success = true
 		response.Message = "Comunicación de baja enviada exitosamente"
 
