@@ -205,12 +205,16 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 
 	despatchAddressTypeCodeXML := ""
 	if guide.Shipment.Delivery.Despatch.DespatchAddress.AddressTypeCode != "" {
-		despatchAddressTypeCodeXML = fmt.Sprintf("\n                    <cbc:AddressTypeCode>%s</cbc:AddressTypeCode>", guide.Shipment.Delivery.Despatch.DespatchAddress.AddressTypeCode)
+		despatchAddressTypeCodeXML = fmt.Sprintf("\n                    <cbc:AddressTypeCode listID=\"%s\" listAgencyName=\"PE:SUNAT\" listName=\"Establecimientos anexos\">%s</cbc:AddressTypeCode>", 
+			guide.DespatchSupplierParty.Party.PartyIdentification.ID,
+			guide.Shipment.Delivery.Despatch.DespatchAddress.AddressTypeCode)
 	}
 
 	deliveryAddressTypeCodeXML := ""
 	if guide.Shipment.Delivery.DeliveryAddress.AddressTypeCode != "" {
-		deliveryAddressTypeCodeXML = fmt.Sprintf("\n                <cbc:AddressTypeCode>%s</cbc:AddressTypeCode>", guide.Shipment.Delivery.DeliveryAddress.AddressTypeCode)
+		deliveryAddressTypeCodeXML = fmt.Sprintf("\n                <cbc:AddressTypeCode listID=\"%s\" listAgencyName=\"PE:SUNAT\" listName=\"Establecimientos anexos\">%s</cbc:AddressTypeCode>", 
+			guide.DeliveryCustomerParty.Party.PartyIdentification.ID,
+			guide.Shipment.Delivery.DeliveryAddress.AddressTypeCode)
 	}
 
 	xmlContent := fmt.Sprintf(despatchAdviceTemplate,
