@@ -175,7 +175,7 @@ func TestGenerateXML(t *testing.T) {
 				"<cbc:HandlingCode>02</cbc:HandlingCode>",
 				"<cbc:LicensePlateID>ABC-123</cbc:LicensePlateID>",
 				"<cac:DriverPerson>",
-				"<cbc:ID>10203040</cbc:ID>",
+				`<cbc:ID schemeID="1">10203040</cbc:ID>`,
 			},
 		},
 		{
@@ -199,8 +199,8 @@ func TestGenerateXML(t *testing.T) {
 				"<cbc:ID>T001-2</cbc:ID>",
 				"<cbc:HandlingCode>01</cbc:HandlingCode>",
 				"<cac:CarrierParty>",
-				"<cbc:ID>20600000001</cbc:ID>",
-				"<cbc:Name><![CDATA[Transportes SAC]]></cbc:Name>",
+				`<cbc:ID schemeID="6">20600000001</cbc:ID>`,
+				"<cbc:RegistrationName><![CDATA[Transportes SAC]]></cbc:RegistrationName>",
 			},
 		},
 	}

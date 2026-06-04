@@ -38,27 +38,23 @@ const despatchAdviceTemplate = `<?xml version="1.0" encoding="UTF-8"?>
         </cac:DigitalSignatureAttachment>
     </cac:Signature>
     <cac:DespatchSupplierParty>
-        <cbc:CustomerAssignedAccountID>%s</cbc:CustomerAssignedAccountID>
-        <cbc:AdditionalAccountID>%s</cbc:AdditionalAccountID>
         <cac:Party>
             <cac:PartyIdentification>
-                <cbc:ID>%s</cbc:ID>
+                <cbc:ID schemeID="6">%s</cbc:ID>
             </cac:PartyIdentification>
-            <cac:PartyName>
-                <cbc:Name><![CDATA[%s]]></cbc:Name>
-            </cac:PartyName>
+            <cac:PartyLegalEntity>
+                <cbc:RegistrationName><![CDATA[%s]]></cbc:RegistrationName>
+            </cac:PartyLegalEntity>
         </cac:Party>
     </cac:DespatchSupplierParty>
     <cac:DeliveryCustomerParty>
-        <cbc:CustomerAssignedAccountID>%s</cbc:CustomerAssignedAccountID>
-        <cbc:AdditionalAccountID>%s</cbc:AdditionalAccountID>
         <cac:Party>
             <cac:PartyIdentification>
-                <cbc:ID>%s</cbc:ID>
+                <cbc:ID schemeID="%s">%s</cbc:ID>
             </cac:PartyIdentification>
-            <cac:PartyName>
-                <cbc:Name><![CDATA[%s]]></cbc:Name>
-            </cac:PartyName>
+            <cac:PartyLegalEntity>
+                <cbc:RegistrationName><![CDATA[%s]]></cbc:RegistrationName>
+            </cac:PartyLegalEntity>
         </cac:Party>
     </cac:DeliveryCustomerParty>
     <cac:Shipment>
@@ -92,15 +88,20 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 	for _, stage := range guide.Shipment.ShipmentStages {
 		carrierXML := ""
 		if stage.CarrierParty != nil {
+			carrierDocType := "6"
+			if len(stage.CarrierParty.PartyIdentification.ID) != 11 {
+				carrierDocType = "1"
+			}
 			carrierXML = fmt.Sprintf(`
         <cac:CarrierParty>
             <cac:PartyIdentification>
-                <cbc:ID>%s</cbc:ID>
+                <cbc:ID schemeID="%s">%s</cbc:ID>
             </cac:PartyIdentification>
-            <cac:PartyName>
-                <cbc:Name><![CDATA[%s]]></cbc:Name>
-            </cac:PartyName>
+            <cac:PartyLegalEntity>
+                <cbc:RegistrationName><![CDATA[%s]]></cbc:RegistrationName>
+            </cac:PartyLegalEntity>
         </cac:CarrierParty>`,
+				carrierDocType,
 				stage.CarrierParty.PartyIdentification.ID,
 				stage.CarrierParty.PartyName.Name,
 			)
@@ -120,12 +121,17 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 
 		driverXML := ""
 		if stage.DriverPerson != nil {
+			driverDocType := "1"
+			if len(stage.DriverPerson.ID.ID) == 11 {
+				driverDocType = "6"
+			} else if len(stage.DriverPerson.ID.ID) != 8 {
+				driverDocType = "4"
+			}
 			driverXML = fmt.Sprintf(`
         <cac:DriverPerson>
-            <cac:ID>
-                <cbc:ID>%s</cbc:ID>
-            </cac:ID>
+            <cbc:ID schemeID="%s">%s</cbc:ID>
         </cac:DriverPerson>`,
+				driverDocType,
 				stage.DriverPerson.ID.ID,
 			)
 		}
@@ -168,6 +174,11 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 		)
 	}
 
+	customerDocType := "6"
+	if len(guide.DeliveryCustomerParty.Party.PartyIdentification.ID) != 11 {
+		customerDocType = "1"
+	}
+
 	xmlContent := fmt.Sprintf(despatchAdviceTemplate,
 		guide.ID,
 		guide.IssueDate,
@@ -177,12 +188,9 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 		guide.Signature.SignatoryParty.PartyIdentification.ID,
 		guide.Signature.SignatoryParty.PartyName.Name,
 		guide.Signature.ID, // URI #ID
-		guide.DespatchSupplierParty.CustomerAssignedAccountID,
-		guide.DespatchSupplierParty.AdditionalAccountID,
 		guide.DespatchSupplierParty.Party.PartyIdentification.ID,
 		guide.DespatchSupplierParty.Party.PartyName.Name,
-		guide.DeliveryCustomerParty.CustomerAssignedAccountID,
-		guide.DeliveryCustomerParty.AdditionalAccountID,
+		customerDocType,
 		guide.DeliveryCustomerParty.Party.PartyIdentification.ID,
 		guide.DeliveryCustomerParty.Party.PartyName.Name,
 		guide.Shipment.HandlingCode,

@@ -32,27 +32,23 @@
         </cac:DigitalSignatureAttachment>
     </cac:Signature>
     <cac:DespatchSupplierParty>
-        <cbc:CustomerAssignedAccountID>20600000000</cbc:CustomerAssignedAccountID>
-        <cbc:AdditionalAccountID>6</cbc:AdditionalAccountID>
         <cac:Party>
             <cac:PartyIdentification>
-                <cbc:ID>20600000000</cbc:ID>
+                <cbc:ID schemeID="6">20600000000</cbc:ID>
             </cac:PartyIdentification>
-            <cac:PartyName>
-                <cbc:Name><![CDATA[MI EMPRESA SAC]]></cbc:Name>
-            </cac:PartyName>
+            <cac:PartyLegalEntity>
+                <cbc:RegistrationName><![CDATA[MI EMPRESA SAC]]></cbc:RegistrationName>
+            </cac:PartyLegalEntity>
         </cac:Party>
     </cac:DespatchSupplierParty>
     <cac:DeliveryCustomerParty>
-        <cbc:CustomerAssignedAccountID>20600000000</cbc:CustomerAssignedAccountID>
-        <cbc:AdditionalAccountID>6</cbc:AdditionalAccountID>
         <cac:Party>
             <cac:PartyIdentification>
-                <cbc:ID>20600000000</cbc:ID>
+                <cbc:ID schemeID="6">20600000000</cbc:ID>
             </cac:PartyIdentification>
-            <cac:PartyName>
-                <cbc:Name><![CDATA[MI EMPRESA SAC]]></cbc:Name>
-            </cac:PartyName>
+            <cac:PartyLegalEntity>
+                <cbc:RegistrationName><![CDATA[MI EMPRESA SAC]]></cbc:RegistrationName>
+            </cac:PartyLegalEntity>
         </cac:Party>
     </cac:DeliveryCustomerParty>
     <cac:Shipment>
@@ -72,9 +68,7 @@
             </cac:RoadTransportInstallation>
         </cac:TransportMeans>
         <cac:DriverPerson>
-            <cac:ID>
-                <cbc:ID>10203040</cbc:ID>
-            </cac:ID>
+            <cbc:ID schemeID="1">10203040</cbc:ID>
         </cac:DriverPerson>
     </cac:ShipmentStage>
         <cac:Delivery>
