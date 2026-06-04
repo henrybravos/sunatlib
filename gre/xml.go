@@ -136,13 +136,23 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 			)
 		}
 
+		loadingXML := ""
+		if stage.LoadingTransportEvent != nil && stage.LoadingTransportEvent.OccurrenceDate != "" {
+			loadingXML = fmt.Sprintf(`
+        <cac:LoadingTransportEvent>
+            <cbc:OccurrenceDate>%s</cbc:OccurrenceDate>
+        </cac:LoadingTransportEvent>`,
+				stage.LoadingTransportEvent.OccurrenceDate,
+			)
+		}
+
 		stagesXML += fmt.Sprintf(`
     <cac:ShipmentStage>
         <cbc:ID>%s</cbc:ID>
         <cbc:TransportModeCode>%s</cbc:TransportModeCode>
         <cac:TransitPeriod>
             <cbc:StartDate>%s</cbc:StartDate>
-        </cac:TransitPeriod>%s%s%s
+        </cac:TransitPeriod>%s%s%s%s
     </cac:ShipmentStage>`,
 			stage.ID,
 			stage.TransportModeCode,
@@ -150,6 +160,7 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 			carrierXML,
 			meansXML,
 			driverXML,
+			loadingXML,
 		)
 	}
 

@@ -84,16 +84,21 @@ type Measure struct {
 }
 
 type ShipmentStage struct {
-	ID                      string         `xml:"cbc:ID"`
-	TransportModeCode       string         `xml:"cbc:TransportModeCode"`
-	TransitPeriod           Period         `xml:"cac:TransitPeriod"`
-	CarrierParty            *CarrierParty  `xml:"cac:CarrierParty,omitempty"`
-	TransportMeans          *TransportMeans `xml:"cac:TransportMeans,omitempty"`
-	DriverPerson            *Person        `xml:"cac:DriverPerson,omitempty"`
+	ID                      string                 `xml:"cbc:ID"`
+	TransportModeCode       string                 `xml:"cbc:TransportModeCode"`
+	TransitPeriod           Period                 `xml:"cac:TransitPeriod"`
+	CarrierParty            *CarrierParty          `xml:"cac:CarrierParty,omitempty"`
+	TransportMeans          *TransportMeans        `xml:"cac:TransportMeans,omitempty"`
+	DriverPerson            *Person                `xml:"cac:DriverPerson,omitempty"`
+	LoadingTransportEvent   *LoadingTransportEvent `xml:"cac:LoadingTransportEvent,omitempty"`
 }
 
 type Period struct {
 	StartDate string `xml:"cbc:StartDate"`
+}
+
+type LoadingTransportEvent struct {
+	OccurrenceDate string `xml:"cbc:OccurrenceDate"`
 }
 
 type CarrierParty struct {
