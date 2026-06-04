@@ -129,8 +129,9 @@ type Despatch struct {
 }
 
 type Address struct {
-	ID          string `xml:"cbc:ID"` // Ubigeo
-	AddressLine Line   `xml:"cac:AddressLine"`
+	ID              string `xml:"cbc:ID"` // Ubigeo
+	AddressTypeCode string `xml:"cbc:AddressTypeCode,omitempty"` // Código establecimiento anexo
+	AddressLine     Line   `xml:"cac:AddressLine"`
 }
 
 type Line struct {

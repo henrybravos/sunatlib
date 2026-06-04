@@ -76,6 +76,7 @@
             <cac:Despatch>
                 <cac:DespatchAddress>
                     <cbc:ID>150101</cbc:ID>
+                    
                     <cac:AddressLine>
                         <cbc:Line><![CDATA[AV. LOS PINOS 123]]></cbc:Line>
                     </cac:AddressLine>
@@ -83,6 +84,7 @@
             </cac:Despatch>
             <cac:DeliveryAddress>
                 <cbc:ID>150142</cbc:ID>
+                
                 <cac:AddressLine>
                     <cbc:Line><![CDATA[CALLE LAS FLORES 456]]></cbc:Line>
                 </cac:AddressLine>
