@@ -89,8 +89,8 @@ type ShipmentStage struct {
 	TransitPeriod           Period                 `xml:"cac:TransitPeriod"`
 	CarrierParty            *CarrierParty          `xml:"cac:CarrierParty,omitempty"`
 	TransportMeans          *TransportMeans        `xml:"cac:TransportMeans,omitempty"`
-	DriverPerson            *Person                `xml:"cac:DriverPerson,omitempty"`
 	LoadingTransportEvent   *LoadingTransportEvent `xml:"cac:LoadingTransportEvent,omitempty"`
+	DriverPerson            *Person                `xml:"cac:DriverPerson,omitempty"`
 }
 
 type Period struct {

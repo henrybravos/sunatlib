@@ -159,8 +159,8 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 			stage.TransitPeriod.StartDate,
 			carrierXML,
 			meansXML,
-			driverXML,
 			loadingXML,
+			driverXML,
 		)
 	}
 
