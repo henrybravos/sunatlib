@@ -54,8 +54,8 @@
     <cac:Shipment>
         <cbc:ID>1</cbc:ID>
         <cbc:HandlingCode>04</cbc:HandlingCode>
-        <cbc:GrossWeightMeasure unitCode="KGM">50.000000</cbc:GrossWeightMeasure>
         
+        <cbc:GrossWeightMeasure unitCode="KGM">50.000000</cbc:GrossWeightMeasure>
         
     <cac:ShipmentStage>
         <cbc:ID>1</cbc:ID>

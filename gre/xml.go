@@ -60,8 +60,8 @@ const despatchAdviceTemplate = `<?xml version="1.0" encoding="UTF-8"?>
     <cac:Shipment>
         <cbc:ID>%s</cbc:ID>
         <cbc:HandlingCode>%s</cbc:HandlingCode>
-        <cbc:GrossWeightMeasure unitCode="%s">%f</cbc:GrossWeightMeasure>
         %s
+        <cbc:GrossWeightMeasure unitCode="%s">%f</cbc:GrossWeightMeasure>
         %s
         <cac:Delivery>
             <cac:Despatch>
@@ -217,9 +217,9 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 		guide.DeliveryCustomerParty.Party.PartyName.Name,
 		shipmentID,
 		guide.Shipment.HandlingCode,
+		specialInstructionsXML,
 		guide.Shipment.GrossWeightMeasure.UnitCode,
 		guide.Shipment.GrossWeightMeasure.Value,
-		specialInstructionsXML,
 		stagesXML,
 		guide.Shipment.Delivery.Despatch.DespatchAddress.ID,
 		guide.Shipment.Delivery.Despatch.DespatchAddress.AddressLine.Line,
