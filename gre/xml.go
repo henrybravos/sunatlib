@@ -58,9 +58,10 @@ const despatchAdviceTemplate = `<?xml version="1.0" encoding="UTF-8"?>
         </cac:Party>
     </cac:DeliveryCustomerParty>
     <cac:Shipment>
-        <cbc:ID>1</cbc:ID>
+        <cbc:ID>%s</cbc:ID>
         <cbc:HandlingCode>%s</cbc:HandlingCode>
         <cbc:GrossWeightMeasure unitCode="%s">%f</cbc:GrossWeightMeasure>
+        %s
         %s
         <cac:Delivery>
             <cac:Despatch>
@@ -190,6 +191,16 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 		customerDocType = "1"
 	}
 
+	specialInstructionsXML := ""
+	if guide.Shipment.SpecialInstructions != "" {
+		specialInstructionsXML = fmt.Sprintf("\n        <cbc:SpecialInstructions>%s</cbc:SpecialInstructions>", guide.Shipment.SpecialInstructions)
+	}
+
+	shipmentID := guide.Shipment.ID
+	if shipmentID == "" {
+		shipmentID = "1"
+	}
+
 	xmlContent := fmt.Sprintf(despatchAdviceTemplate,
 		guide.ID,
 		guide.IssueDate,
@@ -204,9 +215,11 @@ func GenerateXML(guide *DespatchAdvice) ([]byte, error) {
 		customerDocType,
 		guide.DeliveryCustomerParty.Party.PartyIdentification.ID,
 		guide.DeliveryCustomerParty.Party.PartyName.Name,
+		shipmentID,
 		guide.Shipment.HandlingCode,
 		guide.Shipment.GrossWeightMeasure.UnitCode,
 		guide.Shipment.GrossWeightMeasure.Value,
+		specialInstructionsXML,
 		stagesXML,
 		guide.Shipment.Delivery.Despatch.DespatchAddress.ID,
 		guide.Shipment.Delivery.Despatch.DespatchAddress.AddressLine.Line,

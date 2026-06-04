@@ -56,6 +56,7 @@
         <cbc:HandlingCode>01</cbc:HandlingCode>
         <cbc:GrossWeightMeasure unitCode="KGM">200.000000</cbc:GrossWeightMeasure>
         
+        
     <cac:ShipmentStage>
         <cbc:ID>1</cbc:ID>
         <cbc:TransportModeCode>01</cbc:TransportModeCode>

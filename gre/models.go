@@ -72,6 +72,7 @@ type Shipment struct {
 	HandlingCode           string         `xml:"cbc:HandlingCode"` // Modalidad de Traslado: 01 Público, 02 Privado
 	Information            string         `xml:"cbc:Information,omitempty"`
 	SplitConsignmentIndicator bool        `xml:"cbc:SplitConsignmentIndicator"`
+	SpecialInstructions    string         `xml:"cbc:SpecialInstructions,omitempty"`
 	GrossWeightMeasure     Measure        `xml:"cbc:GrossWeightMeasure"`
 	ShipmentStages         []ShipmentStage `xml:"cac:ShipmentStage"`
 	Delivery               Delivery       `xml:"cac:Delivery"`
