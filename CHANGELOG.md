@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-10-01
+
+### Fixed
+- **`ExchangeRateService` devolvía un tipo de cambio distinto al de SUNAT**
+  - El respaldo del BCRP usaba las series interbancarias (`PD04637PD`/`PD04638PD`); ahora usa las SBS (`PD04639PD`/`PD04640PD`), que son las que publica SUNAT.
+  - Tomaba el cierre del mismo día pedido. El tipo de cambio de SUNAT para el día D es el cierre SBS del último día hábil anterior a D: ahora consulta hasta D-1. Para el 01/10/2026 devolvía 3.432 en vez de 3.437.
+  - "Hoy" se calcula en hora de Lima, no en la del servidor.
+  - apis.net.pe ya no se acepta si responde una fecha distinta a la pedida.
+
+### Changed
+- Orden de fuentes: SUNAT (`sunat.gob.pe/a/txt/tipoCambio.txt`, solo para hoy) → BCRP → apis.net.pe (tercero que limita consultas, último recurso).
+- El BCRP a veces responde una página HTML de verificación en vez del JSON: se reintenta (`BCRPRetries`, `RetryDelay`).
+- `ExchangeRate.CloseDate`: fecha del cierre SBS usado cuando la fuente es el BCRP.
+- `ExchangeRate.Origin`: `SUNAT`, `BCRP` o `APISNETPE`.
+
 ## [1.8.0] - 2026-10-01
 
 ### Added
